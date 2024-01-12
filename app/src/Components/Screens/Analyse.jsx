@@ -22,21 +22,24 @@ function Analyse() {
     const toast = useToast();
     const [columns, setColumns] = useState([])
     const [columnType, setColumnType] = useState([]);
-
-    
       
     function handleCSVData(data){
         let filteredData = {}
         filteredData["csvData"] = filterArraysByDataType(data, setColumnType)
         filteredData["fileName"] = csvData.fileName
         filteredData["fileSize"] = csvData.fileSize
-        console.log(csvData)
-        setColumns(data[0])
+        filteredData["headers"] = csvData.headers
         dispatch(setCSVData(filteredData));
+        if(csvData.headers === true){
+            setColumns(csvData.csvData[0])
+        } else{
+            setColumns(Array.from({ length: csvData.csvData[0].length }, (_, i) => `Column ${i + 1}`))
+        }
     }
 
+
     useEffect(() => {
-        async function fetchData() {
+        function fetchData() {
             try {
                 // Check if csvData.csvData is null before calling handleCSVData
                 if (csvData.csvData !== null) {
@@ -55,7 +58,7 @@ function Analyse() {
         }
     
         fetchData();
-    }, [csvData, navigate]);
+    }, []);
     
 
     const handleColumnTypeChange = (e, columnIndex) => {
@@ -100,17 +103,17 @@ function Analyse() {
             <Flex mt={15} mb={50}>
                 <VStack m={'auto'} justifyContent={'center'} gap={5} >
                     <Image src={logo} boxSize='100px' alt='logo' borderRadius={"20px"} />
-                    <Box p={10} boxShadow={"md"} borderRadius={10} minW={"800px"}>
+                    <Box p={10} boxShadow={"md"} borderRadius={10} w={"800px"}>
                         <Text fontSize={'sm'} fontWeight={'bold'}>Fields ({columns.length})</Text>
-                        <HStack mt={2}>
+                        <Box mt={2}>
                             {
                                 columns.map((item, index) => (
-                                    <Tag px={4} key={index} >       
-                                        <TagLabel fontSize={11}>{item}</TagLabel>
+                                    <Tag px={4} key={index} m={1}>       
+                                        <TagLabel fontSize={11} >{item}</TagLabel>
                                     </Tag>
                                 ))
                             }
-                        </HStack>
+                        </Box>
                     </Box>
                     <Box p={10} boxShadow={"md"} borderRadius={10} minW={"800px"}>
                         <Text fontSize={'sm'} fontWeight={'bold'}>Fields and Types</Text>
@@ -159,7 +162,10 @@ function Analyse() {
                                 <Tbody>
                                 {
                                     csvData && csvData.csvData && csvData.csvData.length > 1 ? (
-                                        csvData.csvData.slice(1, 11).map((item, index) => (
+                                        csvData.csvData.slice(
+                                        csvData.headers ? 1 : 0,
+                                        csvData.headers ? 11 : 10 
+                                        ).map((item, index) => (
                                             <Tr key={index}>
                                                 <Td color={"gray"} fontSize={'xs'}>{index + 1}</Td>
                                                 {item.map((item_, index_) => (
@@ -180,7 +186,6 @@ function Analyse() {
                                             </Tr>
                                         ))
                                     ) : (
-                                        // Render something else or handle the case when csvData is null
                                         <tr>
                                             <td >No data available</td>
                                         </tr>

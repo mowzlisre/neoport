@@ -11,7 +11,7 @@ function Welcome(){
         setInterval(() => {
             setIsLoading(false)
             navigate('/upload')
-        }, 3000)
+        }, 2000)
         setIsLoading(true)
     }
     return <>

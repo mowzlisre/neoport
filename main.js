@@ -8,6 +8,8 @@ const createMainWindow = () => {
         title: "NeoPort",
         minWidth: 1000,
         minHeight: 600,
+        width: 1000,
+        height: 600,
         webPreferences: {
           contextIsolation: true,
           nodeIntegration: true,

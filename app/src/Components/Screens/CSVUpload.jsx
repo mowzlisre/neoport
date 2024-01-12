@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { useDropzone } from 'react-dropzone';
 import Papa from 'papaparse';
-import { Flex, VStack, Box, Text, Image, Button, useToast } from "@chakra-ui/react"
+import { Flex, VStack, Box, Text, Image, Button, useToast, Input, Checkbox } from "@chakra-ui/react"
 import { TiTimes } from "react-icons/ti";
 import logo from "../../logo.png";
 import { useDispatch, useSelector } from 'react-redux';
 import { TbCsv } from "react-icons/tb";
-import { setCSVData } from '../../redux/actions/csvActions';
+import { setCSVData, setHeaders } from '../../redux/actions/csvActions';
 import { useNavigate } from 'react-router-dom';
 
 const CSVUpload = () => {
@@ -14,7 +14,7 @@ const CSVUpload = () => {
   const navigate = useNavigate()
   const dispatch = useDispatch();
   const csvData = useSelector((state) => state.csvData)
-
+  const headers = useSelector((state) => state.csvData.headers);
   const toast = useToast()
   const onDrop = (acceptedFiles) => {
     if (acceptedFiles.length === 0) return;
@@ -29,7 +29,7 @@ const CSVUpload = () => {
         isClosable: true,
       })
     }
-    console.log(file.name)
+    
     Papa.parse(file, {
       complete: (result) => {
         const { data } = result;
@@ -61,6 +61,7 @@ const CSVUpload = () => {
       csvData: null,
       fileName: null,
       fileSize: null,
+      fileSize: true,
     }));
   }
   
@@ -84,6 +85,12 @@ const CSVUpload = () => {
     enableDropzone()
   }
 
+  const handleHeadersChange = () => {
+    const newHeadersValue = !headers; // Toggle the headers value
+    dispatch(setHeaders(newHeadersValue)); // Dispatch the action to update Redux state
+  };
+
+
   return (
     <div>
       <Flex h={'100vh'} className="dropzone">
@@ -101,6 +108,11 @@ const CSVUpload = () => {
                 <Box mt={1}>
                   <TiTimes onClick={() => enableDropzone()} fontSize={14} style={{color: "grey"}}/>
                 </Box>
+              </Flex>
+              <Flex textAlign={'start'} w={"100%"}>
+                <Checkbox defaultChecked={headers} onChange={handleHeadersChange} size={'sm'}>
+                  <Text fontSize={'xs'}>Has Headers</Text>
+                </Checkbox>
               </Flex>
               <Button size={'sm'} onClick={() => navigate('/analyse')}>Analyse</Button>
             </VStack>

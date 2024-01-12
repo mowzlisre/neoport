@@ -4,7 +4,7 @@ export const filterArraysByDataType = (data, setColumnType) => {
         const counts = {
             integer: 0,
             float: 0,
-            string: -1,
+            string: 0,
             boolean: 0,
         };
         column.forEach((element) => {
