@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
 import Papa from 'papaparse';
-import { Flex, VStack, Box, Text, Image, Button, useToast, Input, Checkbox } from "@chakra-ui/react"
+import { Flex, VStack, Box, Text, Image, Button, useToast, Input, Checkbox, Spinner } from "@chakra-ui/react"
 import { TiTimes } from "react-icons/ti";
 import logo from "../../logo.png";
 import { useDispatch, useSelector } from 'react-redux';
@@ -15,10 +15,11 @@ const CSVUpload = () => {
   const dispatch = useDispatch();
   const csvData = useSelector((state) => state.csvData)
   const headers = useSelector((state) => state.csvData.headers);
+  const [isLoading, setIsLoading] = useState(false)
   const toast = useToast()
   const onDrop = (acceptedFiles) => {
+    setIsLoading(true)
     if (acceptedFiles.length === 0) return;
-
     const file = acceptedFiles[0];
     if (file.type !== 'text/csv') {
       toast({
@@ -29,7 +30,6 @@ const CSVUpload = () => {
         isClosable: true,
       })
     }
-    
     Papa.parse(file, {
       complete: (result) => {
         const { data } = result;
@@ -41,6 +41,8 @@ const CSVUpload = () => {
             fileSize: file.size,
           })
         );
+
+    setIsLoading(false)
       },
     });
   };
@@ -117,7 +119,12 @@ const CSVUpload = () => {
             ) : (
             <>
               <Box p={20} boxShadow={"md"} borderRadius={10} {...getRootProps()} >
-                <Box><TbCsv fontSize={50}/></Box>
+                <Flex gap={2}>
+                  <Box><TbCsv fontSize={50}/></Box>
+                  {
+                    isLoading &&  <Flex><Spinner thickness='4px' my={'auto'} /></Flex>
+                  }
+                </Flex>
                 <Text fontSize={'small'}>Drag & drop a CSV file here, or click to select one</Text>
                 <input type='file' {...getInputProps()} accept='text/csv' />
               </Box>
