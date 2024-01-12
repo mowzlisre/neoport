@@ -55,7 +55,6 @@ const csvReducer = (state = initialState, action) => {
         csvData: action.payload.csvData,
         fileName: action.payload.fileName,
         fileSize: action.payload.fileSize,
-        headers: action.payload.headers,
         // Update any other state properties as needed
       };
     case "SET_HEADERS":

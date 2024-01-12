@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
 import Papa from 'papaparse';
 import { Flex, VStack, Box, Text, Image, Button, useToast, Input, Checkbox } from "@chakra-ui/react"
@@ -61,7 +61,6 @@ const CSVUpload = () => {
       csvData: null,
       fileName: null,
       fileSize: null,
-      fileSize: true,
     }));
   }
   
@@ -89,7 +88,6 @@ const CSVUpload = () => {
     const newHeadersValue = !headers; // Toggle the headers value
     dispatch(setHeaders(newHeadersValue)); // Dispatch the action to update Redux state
   };
-
 
   return (
     <div>

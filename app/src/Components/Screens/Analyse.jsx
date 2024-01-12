@@ -8,7 +8,7 @@ import {
     Tr,
     Th,
     Td, Select, Tooltip, useToast, 
-    TableContainer, HStack, Tag, TagLabel, TagCloseButton
+    TableContainer, HStack, Tag, TagLabel
 } from '@chakra-ui/react'
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
@@ -23,18 +23,19 @@ function Analyse() {
     const [columns, setColumns] = useState([])
     const [columnType, setColumnType] = useState([]);
       
-    function handleCSVData(data){
+    function handleCSVData(){
         let filteredData = {}
-        filteredData["csvData"] = filterArraysByDataType(data, setColumnType)
         filteredData["fileName"] = csvData.fileName
         filteredData["fileSize"] = csvData.fileSize
         filteredData["headers"] = csvData.headers
-        dispatch(setCSVData(filteredData));
         if(csvData.headers === true){
             setColumns(csvData.csvData[0])
+            filteredData["csvData"] = filterArraysByDataType(csvData.csvData.slice(1,), setColumnType)
         } else{
             setColumns(Array.from({ length: csvData.csvData[0].length }, (_, i) => `Column ${i + 1}`))
+            filteredData["csvData"] = filterArraysByDataType(csvData.csvData, setColumnType)
         }
+        dispatch(setCSVData(filteredData));
     }
 
 
@@ -43,7 +44,7 @@ function Analyse() {
             try {
                 // Check if csvData.csvData is null before calling handleCSVData
                 if (csvData.csvData !== null) {
-                    handleCSVData(csvData.csvData);
+                    handleCSVData();
                 }
                 else{
                     toast({
@@ -97,6 +98,17 @@ function Analyse() {
             </div>
         </Box>
       );
+
+
+    const handleBack = () => {
+        navigate('/upload')
+        dispatch(setCSVData({
+            csvData: null,
+            fileName: null,
+            fileSize: null,
+            headers: true,
+        }));
+    }
     
     return (
         <>
@@ -116,7 +128,7 @@ function Analyse() {
                         </Box>
                     </Box>
                     <Box p={10} boxShadow={"md"} borderRadius={10} minW={"800px"}>
-                        <Text fontSize={'sm'} fontWeight={'bold'}>Fields and Types</Text>
+                        <Text fontSize={'sm'} fontWeight={'bold'}>Fields and Types ({csvData && csvData.csvData && csvData.csvData.length > 1 ? csvData.csvData.length : 0 })</Text>
                         <HStack mt={2}>
                         <TableContainer width={"700px"} height={"400px"} overflow={'auto'}>
                             <Table variant='striped' size={'sm'}>
@@ -162,10 +174,7 @@ function Analyse() {
                                 <Tbody>
                                 {
                                     csvData && csvData.csvData && csvData.csvData.length > 1 ? (
-                                        csvData.csvData.slice(
-                                        csvData.headers ? 1 : 0,
-                                        csvData.headers ? 11 : 10 
-                                        ).map((item, index) => (
+                                        csvData.csvData.map((item, index) => (
                                             <Tr key={index}>
                                                 <Td color={"gray"} fontSize={'xs'}>{index + 1}</Td>
                                                 {item.map((item_, index_) => (
@@ -197,7 +206,7 @@ function Analyse() {
                         </TableContainer>
                         </HStack>
                         <Flex justifyContent={'end'} p={5} gap={3}>
-                            <Button size={'sm'} onClick={() => navigate('/upload')}>Cancel</Button>
+                            <Button size={'sm'} onClick={() => handleBack()}>Cancel</Button>
                             <Button size={'sm'} colorScheme="blue">Import</Button>
                         </Flex>
                     </Box>

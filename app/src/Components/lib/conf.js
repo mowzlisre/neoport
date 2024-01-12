@@ -17,14 +17,11 @@ export const filterArraysByDataType = (data, setColumnType) => {
                     counts.float++;
                 }
             } else if (typeof element === 'string') {
-                if (!isNaN(element)) {
-                    if (Number.isInteger(parseFloat(element))) {
-                        counts.integer++;
-                    } else if (!element.includes('.')) {
-                        counts.integer++;
-                    } else {
-                        counts.float++;
-                    }
+                const parsedValue = parseFloat(element);
+                if (!isNaN(parsedValue) && Number.isInteger(parsedValue)) {
+                    counts.integer++;
+                } else if (!isNaN(parsedValue)) {
+                    counts.float++;
                 } else if (element.toLowerCase() === 'true' || element.toLowerCase() === 'false') {
                     counts.boolean++;
                 } else {
