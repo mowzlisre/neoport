@@ -56,7 +56,6 @@ const CSVUpload = () => {
   });
 
   const enableDropzone = () => {
-    console.log(csvData)
     setDropzoneActive(true);
     dispatch(setCSVData({
       csvData: null,
@@ -80,7 +79,10 @@ const CSVUpload = () => {
     }
   }
 
-  console.log(csvData)
+  const handleBack = () => {
+    navigate('/')
+    enableDropzone()
+  }
 
   return (
     <div>
@@ -113,7 +115,7 @@ const CSVUpload = () => {
           )}
           </Box>
           <Flex ml={'auto'} mr={0}>
-            <Button size={'xs'} onClick={() => navigate('/')}>Cancel</Button>
+            <Button size={'xs'} onClick={() => handleBack()}>Cancel</Button>
           </Flex>
         </VStack>
       </Flex>
