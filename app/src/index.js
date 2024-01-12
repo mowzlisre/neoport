@@ -15,7 +15,6 @@ const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <Provider store={store}>
     <ChakraProvider>
-      <React.StrictMode>
         <HashRouter>
           <Routes>
             <Route path='/' element={<Welcome />} />
@@ -23,7 +22,6 @@ root.render(
             <Route path='/analyse' element={<Analyse />} />
           </Routes>
         </HashRouter>
-      </React.StrictMode>
     </ChakraProvider>
   </Provider>
 );
