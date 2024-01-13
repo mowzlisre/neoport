@@ -77,6 +77,7 @@ function Analyse() {
           .then((data) => {
             setColumns(data.headers);
             storeData["csvData"] = data.data;
+            storeData["dataTypes"] = data.columnType;
             dispatch(setStoreData(storeData));
           })
           .catch((err) => {
@@ -112,10 +113,6 @@ function Analyse() {
                 await setStatusWithDelay("Identifying data types ...", 1000);
                 await setStatusWithDelay("Transforming data types ...", 1000);
     
-                const filteredData = filterObjectsByDataType(storeData.csvData);
-                storeData["csvData"] = filteredData.data;
-                storeData["dataTypes"] = filteredData.columnType;
-                dispatch(setStoreData(storeData));
                 setIsParsed(true);
                 setIsLoading(false);
             
@@ -141,22 +138,24 @@ function Analyse() {
             <Flex mt={15} mb={50} className="fade-in">
                 <VStack m={'auto'} justifyContent={'center'} gap={5}>
                     <Image src={logo} boxSize='100px' alt='logo' borderRadius={"20px"} />
-                    <Box p={10} boxShadow={"md"} borderRadius={10} width={"650px"}>
-                        <Text fontSize={'sm'} fontWeight={'bold'}>Fields ({columns.length})</Text>
-                        <Box mt={2} >
-                            {
-                                columns.map((item, index) => (
-                                    <Tag px={4} key={index} m={1}>
-                                        <TagLabel fontSize={11}>{item}</TagLabel>
-                                    </Tag>
-                                ))
-                            }
+                    <Box p={10} boxShadow={"md"} borderRadius={10}>
+                        <Box width={"600px"}>
+                            <Text fontSize={'sm'} fontWeight={'bold'}>Fields ({columns.length})</Text>
+                            <Box mt={2} >
+                                {
+                                    columns.map((item, index) => (
+                                        <Tag px={4} key={index} m={1}>
+                                            <TagLabel fontSize={11}>{item}</TagLabel>
+                                        </Tag>
+                                    ))
+                                }
+                            </Box>
                         </Box>
                     </Box>
                     <Box p={10} boxShadow={"md"} borderRadius={10}>
                         <Text fontSize={'sm'} fontWeight={'bold'}>Fields and Types ({storeData && storeData.length > 1 ? storeData.length : 0})</Text>
                         <HStack mt={2}>
-                            <TableContainer width={"650px"} height={"400px"} overflow={'auto'}>
+                            <TableContainer width={"600px"} height={"400px"} overflow={'auto'}>
                                 <Table variant='striped' size={'sm'}>
                                     <Thead>
                                         <Tr>
