@@ -1,6 +1,6 @@
 
-export const setCSVData = (data) => ({
-  type: "SET_CSV_DATA",
+export const setStoreData = (data) => ({
+  type: "SET_STORE_DATA",
   payload: data,
 });
 

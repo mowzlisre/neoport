@@ -8,14 +8,17 @@ function Welcome(){
     const navigate = useNavigate()
     const [isLoading, setIsLoading] = useState(false)
     const handleStartImport = () => {
-        setInterval(() => {
-            setIsLoading(false)
-            navigate('/upload')
-        }, 2000)
-        setIsLoading(true)
+        setIsLoading(true);
+        const timeoutId = setTimeout(() => {
+            setIsLoading(false);
+            navigate('/upload');
+        }, 1000);
+    
+        // Cleanup timeout if the component unmounts
+        return () => clearTimeout(timeoutId);
     }
     return <>
-        <Flex h={'100vh'}>
+        <Flex h={'100vh'} className="fade-in">
             <VStack m={'auto'} justifyContent={'center'} textAlign={'center'} gap={5}>
                 <Image src={logo} boxSize='150px' alt='logo' borderRadius={"20px"} />
                 <Button size={'sm'} onClick={() => handleStartImport()} isLoading={isLoading} >Start Import</Button>

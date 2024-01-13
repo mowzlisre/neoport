@@ -1,4 +1,4 @@
-export const filterArraysByDataType = (data, setColumnType) => {
+export const filterObjectsByDataType = (data) => {
     // Function to count occurrences of data types in a column
     const countDataTypes = (column) => {
         const counts = {
@@ -35,61 +35,81 @@ export const filterArraysByDataType = (data, setColumnType) => {
         return counts;
     };
 
-    // Update columnType based on the data types and assign all data types with their counts
-    const newColumnTypes = data[0].map((_, columnIndex) => {
-        const columnData = data.map((row) => row[columnIndex]);
-        const counts = countDataTypes(columnData);
-
-        let maxDataType = 'string'; // Default to string if no other data type has a higher count
-        let maxCount = 0;
-
-        for (const dataType in counts) {
-            if (counts[dataType] > maxCount) {
-                maxCount = counts[dataType];
-                maxDataType = dataType;
+    // Extract column data from the array of objects
+    const columnData = {};
+    data.forEach((row) => {
+        for (const key in row) {
+            if (!columnData[key]) {
+                columnData[key] = [];
             }
+            columnData[key].push(row[key]);
         }
-
-        // Check if the maxDataType and the count of the maxDataType match
-        const abs = maxDataType === 'string' ? true : counts[maxDataType] === maxCount;
-
-        return {
-            dataTypeCounts: counts,
-            maxDataType: maxDataType,
-            abs: abs,
-        };
     });
 
-    setColumnType(newColumnTypes);
+    // Update columnType based on the data types and assign all data types with their counts
+    const newColumnTypes = Object.keys(columnData).map((columnName) => {
+        const counts = countDataTypes(columnData[columnName]);
+      
+        let maxDataType = 'string'; // Default to string if no other data type has a higher count
+        let maxCount = 0;
+        let totalCounts = 0;
+      
+        for (const dataType in counts) {
+          if (counts[dataType] > maxCount) {
+            maxCount = counts[dataType];
+            maxDataType = dataType;
+          }
+          totalCounts += counts[dataType];
+        }
+      
+        // Check if the maxDataType and the count of the maxDataType match
+        const abs = counts[maxDataType] === maxCount && totalCounts !== maxCount;
+      
+        return {
+          dataTypeCounts: counts,
+          maxDataType: maxDataType,
+          abs: abs,
+        };
+      });
+      
 
     // Type cast values based on the newColumnTypes
     const filteredData = data.map((row) => {
-        return row.map((element, columnIndex) => {
+        const newRow = { ...row };
+        for (const columnName in newRow) {
+            const element = newRow[columnName];
             if (element === "true" || element === "True") {
-                return true;
+                newRow[columnName] = true;
             } else if (element === "false" || element === "False") {
-                return false;
+                newRow[columnName] = false;
             } else if (!isNaN(element)) {
                 if (Number.isInteger(parseFloat(element))) {
-                    return parseInt(element);
+                    newRow[columnName] = parseInt(element);
                 } else {
-                    return parseFloat(element);
+                    newRow[columnName] = parseFloat(element);
                 }
             }
-            return element;
-        });
-    });
-
-    let s = [];
-
-    newColumnTypes.forEach(item => {
-        const dataTypeCounts = item.dataTypeCounts;
-        let sum = 0;
-        for (const dataType in dataTypeCounts) {
-            sum += dataTypeCounts[dataType];
         }
-        item["abs"] = item.maxDataType === 'string' ? true : item.dataTypeCounts[item.maxDataType] === sum;
-        s.push(item);
+        return newRow;
     });
-    return filteredData;
+
+    return { data: filteredData, columnType: newColumnTypes} ;
 };
+
+
+
+
+export const formatFileSize = (fileSizeInBytes) =>  {
+    if (fileSizeInBytes < 1024) {
+      return `${fileSizeInBytes} bytes`;
+    } else if (fileSizeInBytes < 1024 * 1024) {
+      const fileSizeInKB = (fileSizeInBytes / 1024).toFixed(2);
+      return `${fileSizeInKB} KB`;
+    } else if (fileSizeInBytes < 1024 * 1024 * 1024) {
+      const fileSizeInMB = (fileSizeInBytes / (1024 * 1024)).toFixed(2);
+      return `${fileSizeInMB} MB`;
+    } else {
+      const fileSizeInGB = (fileSizeInBytes / (1024 * 1024 * 1024)).toFixed(2);
+      return `${fileSizeInGB} GB`;
+    }
+  }

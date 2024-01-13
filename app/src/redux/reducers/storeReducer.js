@@ -40,31 +40,35 @@
 
 
 const initialState = {
-  csvData: null,
+  csvData: [],
+  filePath: null,
   fileName: null,
   fileSize: null,
   headers: true,
+  dataTypes: []
   // Add any other state properties you need
 };
 
-const csvReducer = (state = initialState, action) => {
+const storeReducer = (state = initialState, action) => {
   switch (action.type) {
-    case "SET_CSV_DATA":
+    case "SET_STORE_DATA":
       return {
         ...state,
         csvData: action.payload.csvData,
+        filePath: action.payload.filePath,
         fileName: action.payload.fileName,
         fileSize: action.payload.fileSize,
-        // Update any other state properties as needed
+        dataTypes: action.payload.dataTypes,
       };
-    case "SET_HEADERS":
-      return {
-        ...state,
-        headers: action.payload, // Update headers with the new value
-      };
+      case "SET_HEADERS":
+        return {
+          ...state,
+          headers: action.payload, // Update headers with the new value
+        };
+
     default:
       return state;
   }
 };
-export default csvReducer;
+export default storeReducer;
 

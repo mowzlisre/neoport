@@ -1,8 +1,8 @@
 import { combineReducers, createStore } from 'redux';
-import csvReducer from './reducers/csvReducer';
+import storeReducer from './reducers/storeReducer';
 
 const rootReducer = combineReducers({
-  csvData: csvReducer,
+  csvData: storeReducer,
   // Other reducers if you have more
 });
 

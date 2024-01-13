@@ -13,7 +13,7 @@ const createMainWindow = () => {
             contextIsolation: true,
             nodeIntegration: true,
             preload: path.join(__dirname, './preload.js'),
-            devTools: false
+            //devTools: false
         },
         
     })
@@ -21,9 +21,9 @@ const createMainWindow = () => {
         pathname: path.join( __dirname, 'app/build/index.html'),
         protocol: 'file'
     })
-    mainWindow.loadURL(startUrl)
+    // mainWindow.loadURL(startUrl)
 
-    // mainWindow.loadURL("http://localhost:3000")
+    mainWindow.loadURL("http://localhost:3000")
 }
 
 app.whenReady().then(() => {
