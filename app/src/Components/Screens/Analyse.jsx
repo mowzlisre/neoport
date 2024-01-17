@@ -13,18 +13,19 @@ import {
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { setStoreData } from "../../redux/actions/storeActions";
+import { IoChevronBackOutline } from "react-icons/io5";
 import { checkForAbsolute} from "../lib/conf";
 import { FcDeleteDatabase } from "react-icons/fc";
 import { MdInfo } from "react-icons/md";
 function Analyse() {
-    const storeData = useSelector((state) => state.csvData)
-    const [isLoading, setIsLoading] = useState(false)
-    const [isParsed, setIsParsed] = useState(false)
+    const storeData = useSelector((state) => state.storeData)
     const navigate = useNavigate();
     const dispatch = useDispatch();
     const toast = useToast();
     const [columns, setColumns] = useState([])
     const [status, setStatus] = useState('')
+    const [n, setN] = useState(0)
+    const [sample, setSample] = useState({})
 
     function secondsToTime(seconds) {
         const minutes = Math.floor(seconds / 60);
@@ -96,8 +97,6 @@ function Analyse() {
 
 
     const handleBack = () => {
-        storeData["csvData"] = {}
-        console.log(storeData)
         dispatch(setStoreData(storeData));
         navigate('/upload')
     }
@@ -108,14 +107,14 @@ function Analyse() {
     }
 
     const fetchData = async () => {
-        setIsLoading(true);
         try {
-            await setStatusWithDelay("Reading file ...", 1000);
+            await setStatusWithDelay("Reading file", 1000);
             let headers = []
             let dataType = {}
+            let parseType = storeData.parseDataTypes === true ? "init" : ''
             if (storeData.filePath !== null) {
                 const n = await window.electron.getLines(storeData.filePath, storeData.headers)
-                await setStatusWithDelay("Skipping empty lines ...", 1000);
+                setN(n)
                 headers = await window.electron.getHeaders(storeData.filePath, storeData.headers)
                 setColumns(headers);
                 const arr = Array.from({ length: Math.ceil((n + 1) / 10000) }, (v, i) => i * 10000).concat(n + 1);
@@ -136,25 +135,22 @@ function Analyse() {
                 })
                 if (arr.length > 2) {
                     for (let i = 0; i < arr.length - 1; i++) {
-                        let d = await window.electron.getData(storeData.filePath, headers, arr[i], arr[i + 1], dataType, "init")
+                        let d = await window.electron.getData(storeData.filePath, headers, arr[i], arr[i + 1], dataType, parseType)
                         if (i === 0) {
-                            console.log("storing for once")
-                            storeData["csvData"] = d.data.slice(0, 10)
+                            setSample(d.data.slice(0, 10))
                             dispatch(setStoreData(storeData));
                         }
                         dataType = d.dataType
                         await setStatusWithDelay(`Reading CSV data (${(((i + 1) * 100) / arr.length - 1).toFixed(0)}%) ~ ${secondsToTime((arr.length - i) * 4)}`, 1000);
                     }
                 } else {
-                    let d = await window.electron.getData(storeData.filePath, headers, arr[0], arr[1], dataType, "init")
-                    storeData["csvData"] = d.data.slice(0, 10)
+                    let d = await window.electron.getData(storeData.filePath, headers, arr[0], arr[1], dataType, parseType)
+                    setSample(d.data.slice(0, 10))
                     dataType = d.dataType
-
                 }
-                dataType = checkForAbsolute(dataType)
+                dataType = checkForAbsolute(dataType, storeData.parseDataTypes)
                 storeData["dataTypes"] = dataType;
                 dispatch(setStoreData(storeData));
-
             } else {
                 toast({
                     title: <Text fontSize={'sm'}>File not found</Text>,
@@ -165,9 +161,7 @@ function Analyse() {
                 navigate('/upload');
                 return;
             }
-            await setStatusWithDelay("Identifying data types ...", 1000);
-            setIsParsed(true);
-            setIsLoading(false);
+            await setStatusWithDelay("Identifying data types", 1000);
             await setStatusWithDelay("", 1000);
 
 
@@ -184,9 +178,15 @@ function Analyse() {
         <>
             <Flex height="60vh" flexDirection="row">
                 <Box p={2} width={"25%"} bg={"aliceblue"}>
-                    <Flex gap={1} p={3} justifyContent={'center'}>
-                        <Image src={logo} boxSize='30px' alt='logo' borderRadius={"20px"} />
-                        <Text my={'auto'} fontWeight={"bold"} fontSize={"lg"}>NeoPort</Text>
+                    <Flex gap={1} p={3} justifyContent={'space-evenly'}>
+                        <Box width={"20%"} my={"auto"} onClick={handleBack} role="button">
+                            <IoChevronBackOutline fontSize={25} color={"teal"}/>
+                        </Box>
+                        <Flex width={"60%"} justifyContent={'center'}>
+                            <Image src={logo} boxSize='30px' alt='logo' borderRadius={"20px"} />
+                            <Text my={'auto'} fontWeight={"bold"} fontSize={"lg"}>NeoPort</Text>
+                        </Flex>
+                        <Box width={"20%"}></Box>
                     </Flex>
                     {
                         columns.length !== 0 ?
@@ -222,7 +222,7 @@ function Analyse() {
                     <Text>Third Section</Text>
                     <VStack spacing={4}>
                         <Card width={"100%"}>
-                            <Button onClick={() => handleBack()}>Back</Button>
+                            
                         </Card>
                     </VStack>
                 </Box>
@@ -230,7 +230,7 @@ function Analyse() {
             <Divider/>
             <Flex height={"35vh"} bg={"white"} p={3} pb={0}>
                 {
-                    storeData.csvData.length > 0 && storeData.dataTypes ?
+                    sample.length > 0 && storeData.dataTypes ?
                         <TableContainer overflowY={'scroll'}>
                             <Table variant='striped' size={'sm'}>
                                 <Thead>
@@ -259,10 +259,14 @@ function Analyse() {
                                                                     value={storeData.dataTypes[item].maxDataType}
                                                                     onChange={handleColumnTypeChange}
                                                                 >
-                                                                    <option value='string'>string</option>
-                                                                    <option value='integer'>integer</option>
-                                                                    <option value='float'>float</option>
-                                                                    <option value='boolean'>boolean</option>
+                                                                    <option value='STRING'>STRING</option>
+                                                                    <option value='NULL'>NULL</option>
+                                                                    <option value='LIST'>LIST</option>
+                                                                    <option value='MAP'>MAP</option>
+                                                                    <option value='BOOLEAN'>BOOLEAN</option>
+                                                                    <option value='INTEGER'>INTEGER</option>
+                                                                    <option value='FLOAT'>FLOAT</option>
+                                                                    <option value='ByteArray'>ByteArray</option>
                                                                 </Select>
                                                                 {storeData.dataTypes[item].abs !== true && <Box my={'auto'}><MdInfo fontSize={16} /></Box>}
                                                             </Flex>
@@ -277,7 +281,7 @@ function Analyse() {
         
                                 <Tbody>
                                     {
-                                        storeData.csvData.map((item, index) => (
+                                        sample.map((item, index) => (
                                             <Tr key={index}>
                                                 <Td color={"gray"} fontSize={'xs'}>{index + 1}</Td>
                                                 {Object.values(item).map((item_, index_) => (
@@ -291,8 +295,17 @@ function Analyse() {
                                                             <b style={{ color: "gray" }}>true</b>
                                                         ) : item_ === false ? (
                                                             <b style={{ color: "gray" }}>false</b>
+                                                        ) : item_ === null || item_ === "" ? (
+                                                            <b>null</b> 
                                                         ) : (
-                                                            <Box dangerouslySetInnerHTML={{ __html: typeof item_ === 'object' ? JSON.stringify(item_) : item_ }}></Box>
+                                                            <Box dangerouslySetInnerHTML={{ 
+                                                                __html: typeof item_ === 'object' ?
+                                                                    JSON.stringify(item_).length > 30 ? 
+                                                                    JSON.stringify(item_).slice(0,30) + " ..." 
+                                                                    : JSON.stringify(item_) 
+                                                                    : item_.length > 30 ?
+                                                                    item_.slice(0,30) + " ..."
+                                                                    : item_ }}/>
                                                         )}
                                                     </Td>
                                                 ))}
@@ -314,7 +327,23 @@ function Analyse() {
             <Divider/>
             <Flex height={"4vh"} justifyContent={"end"} px={10} mt={1}>
                 <Flex gap={3} my={'auto'}>
-                    <Text fontSize={'xs'} my={"auto"} >{status}Hello</Text>
+                    {
+                        status !== '' &&
+                        <Flex gap={2}>
+                            <HStack>
+                            <Spinner size={"xs"}  emptyColor='gray.200' color='blue.500'/>
+                            <Text fontSize={'xs'} my={"auto"} >{status}</Text>
+                            </HStack>
+                            <Center height='4vh' my={'auto'}>
+                                <Divider orientation='vertical' />
+                            </Center>
+                        </Flex>
+                    }
+                    <Text fontSize={'xs'} my={"auto"} >{columns.length} Fields</Text>
+                    <Center height='4vh' my={'auto'}>
+                        <Divider orientation='vertical' />
+                    </Center>
+                    <Text fontSize={'xs'} my={"auto"} >{n} Rows</Text>
                     <Center height='4vh' my={'auto'}>
                         <Divider orientation='vertical' />
                     </Center>

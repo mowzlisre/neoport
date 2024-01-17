@@ -2,7 +2,7 @@ import { combineReducers, createStore } from 'redux';
 import storeReducer from './reducers/storeReducer';
 
 const rootReducer = combineReducers({
-  csvData: storeReducer,
+  storeData: storeReducer,
   // Other reducers if you have more
 });
 

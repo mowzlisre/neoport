@@ -41,6 +41,7 @@ contextBridge.exposeInMainWorld('electron', {
                                     let res = identifyDataType(result.data[i])
                                     rowData[headers[i]] = res[0]
                                     dataType[headers[i]][res[1]]++
+
                                 } else{
                                     rowData[headers[i]] = result.data[i]
                                 }

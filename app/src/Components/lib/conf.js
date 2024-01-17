@@ -1,4 +1,4 @@
-export const checkForAbsolute = (obj) => {
+export const checkForAbsolute = (obj, parse) => {
   for (const outerKey in obj) {
       if (obj.hasOwnProperty(outerKey) && typeof obj[outerKey] === 'object') {
           const innerObj = obj[outerKey];
@@ -11,7 +11,9 @@ export const checkForAbsolute = (obj) => {
                   sum += innerValue;
                   if (innerValue > maxValue) {
                       maxValue = innerValue;
-                      innerObj["maxDataType"] = innerKey;
+                      if(parse === true){
+                        innerObj["maxDataType"] = innerKey;
+                      }
                   }
               }
           }
