@@ -1,4 +1,4 @@
-import { Flex, VStack, Box, Text, Image, Button, Spinner } from "@chakra-ui/react"
+import { Flex, VStack, Box, Text, Image, Button, Spinner, Card, Divider, Center } from "@chakra-ui/react"
 import { useDispatch, useSelector } from 'react-redux';
 import logo from "../../logo.png";
 import {
@@ -13,7 +13,8 @@ import {
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { setStoreData } from "../../redux/actions/storeActions";
-import { filterObjectsByDataType } from "../lib/conf";
+import { checkForAbsolute} from "../lib/conf";
+import { FcDeleteDatabase } from "react-icons/fc";
 import { MdInfo } from "react-icons/md";
 function Analyse() {
     const storeData = useSelector((state) => state.csvData)
@@ -25,14 +26,22 @@ function Analyse() {
     const [columns, setColumns] = useState([])
     const [status, setStatus] = useState('')
 
+    function secondsToTime(seconds) {
+        const minutes = Math.floor(seconds / 60);
+        const remainingSeconds = seconds % 60;
+        const minutesStr = minutes < 10 ? `0${minutes}` : minutes.toString();
+        const secondsStr = remainingSeconds < 10 ? `0${remainingSeconds}` : remainingSeconds.toString();
+        return `${minutesStr}m ${secondsStr}s`;
+    }
+
     const handleColumnTypeChange = (e, columnIndex) => {
         if (storeData.dataTypes) {
-          const newColumnType = [...storeData.dataTypes];
-          newColumnType[columnIndex] = e.target.value;
-          storeData["columnType"] = newColumnType;
-          dispatch(setStoreData(storeData));
+            const newColumnType = [...storeData.dataTypes];
+            newColumnType[columnIndex] = e.target.value;
+            storeData["dataTypes"] = newColumnType;
+            dispatch(setStoreData(storeData));
         }
-      };
+    };
 
     const NTooltip = (data) => (
         <Box>
@@ -40,23 +49,43 @@ function Analyse() {
                 <div>This field has a mixed data type</div>
                 <Box my={1}>
                     {
-                        data.dataTypeCounts.integer !== 0 && <Flex gap={1}>
-                            <b>Integer*</b> <a>{data.dataTypeCounts.integer}</a>
+                        data.INTEGER !== 0 && <Flex gap={1}>
+                            <b>Integer*</b> <a>{data.INTEGER}</a>
                         </Flex>
                     }
                     {
-                        data.dataTypeCounts.float !== 0 && <Flex gap={1}>
-                            <b>Float*</b> <a>{data.dataTypeCounts.float}</a>
+                        data.FLOAT !== 0 && <Flex gap={1}>
+                            <b>Float*</b> <a>{data.FLOAT}</a>
                         </Flex>
                     }
                     {
-                        data.dataTypeCounts.string !== 0 && <Flex gap={1}>
-                            <b>String*</b> <a>{data.dataTypeCounts.string}</a>
+                        data.STRING !== 0 && <Flex gap={1}>
+                            <b>String*</b> <a>{data.STRING}</a>
                         </Flex>
                     }
                     {
-                        data.dataTypeCounts.boolean !== 0 && <Flex gap={1}>
-                            <b>Boolean*</b> <a>{data.dataTypeCounts.boolean}</a>
+                        data.BOOLEAN !== 0 && <Flex gap={1}>
+                            <b>Boolean*</b> <a>{data.BOOLEAN}</a>
+                        </Flex>
+                    }
+                    {
+                        data.LIST !== 0 && <Flex gap={1}>
+                            <b>List*</b> <a>{data.LIST}</a>
+                        </Flex>
+                    }
+                    {
+                        data.MAP !== 0 && <Flex gap={1}>
+                            <b>Map (Object)*</b> <a>{data.MAP}</a>
+                        </Flex>
+                    }
+                    {
+                        data.NULL !== 0 && <Flex gap={1}>
+                            <b>NULL*</b> <a>{data.NULL}</a>
+                        </Flex>
+                    }
+                    {
+                        data.ByteArray !== 0 && <Flex gap={1}>
+                            <b>ByteArray*</b> <a>{data.ByteArray}</a>
                         </Flex>
                     }
                 </Box>
@@ -67,113 +96,159 @@ function Analyse() {
 
 
     const handleBack = () => {
-        // dispatch(setCSVData({csvData: {}, fileName: null, fileSize: null}));
+        storeData["csvData"] = {}
+        console.log(storeData)
+        dispatch(setStoreData(storeData));
         navigate('/upload')
     }
 
-    const handleFileParse = () => {
-        window.electron
-          .readFile(storeData.filePath, storeData.headers)
-          .then((data) => {
-            setColumns(data.headers);
-            storeData["csvData"] = data.data;
-            storeData["dataTypes"] = data.columnType;
-            dispatch(setStoreData(storeData));
-          })
-          .catch((err) => {
-            console.error('Error reading file:', err);
-          });
-    };
-
     async function setStatusWithDelay(status, delay) {
         setStatus(status);
-        await new Promise(resolve => setTimeout(resolve, delay));
+        setTimeout(delay)
     }
 
-    useEffect(() => {
-        const fetchData = async () => {
-            setIsLoading(true);
-    
-            try {
-                await setStatusWithDelay("Reading file ...", 1000);
-    
-                if (storeData.filePath !== null) {
-                    handleFileParse();
-                } else {
-                    toast({
-                        title: <Text fontSize={'sm'}>File not found</Text>,
-                        status: "error",
-                        duration: 3000,
-                        variant: "subtle"
-                    });
-                    navigate('/upload');
-                    return; 
-                }
+    const fetchData = async () => {
+        setIsLoading(true);
+        try {
+            await setStatusWithDelay("Reading file ...", 1000);
+            let headers = []
+            let dataType = {}
+            if (storeData.filePath !== null) {
+                const n = await window.electron.getLines(storeData.filePath, storeData.headers)
                 await setStatusWithDelay("Skipping empty lines ...", 1000);
-                await setStatusWithDelay("Identifying data types ...", 1000);
-                await setStatusWithDelay("Transforming data types ...", 1000);
-    
-                setIsParsed(true);
-                setIsLoading(false);
-            
-    
-            } catch (error) {
-                console.error("Error:", error);
-            } 
-        };
-    
-        fetchData();
-    }, []); // No need for dependencies
-    
+                headers = await window.electron.getHeaders(storeData.filePath, storeData.headers)
+                setColumns(headers);
+                const arr = Array.from({ length: Math.ceil((n + 1) / 10000) }, (v, i) => i * 10000).concat(n + 1);
+                if (storeData.headers === true) {
+                    arr[0] = 1
+                }
+                headers.map((item, index) => {
+                    dataType[headers[index]] = {
+                        NULL: 0,
+                        LIST: 0,
+                        MAP: 0,
+                        BOOLEAN: 0,
+                        INTEGER: 0,
+                        FLOAT: 0,
+                        STRING: 0,
+                        ByteArray: 0,
+                    }
+                })
+                if (arr.length > 2) {
+                    for (let i = 0; i < arr.length - 1; i++) {
+                        let d = await window.electron.getData(storeData.filePath, headers, arr[i], arr[i + 1], dataType, "init")
+                        if (i === 0) {
+                            console.log("storing for once")
+                            storeData["csvData"] = d.data.slice(0, 10)
+                            dispatch(setStoreData(storeData));
+                        }
+                        dataType = d.dataType
+                        await setStatusWithDelay(`Reading CSV data (${(((i + 1) * 100) / arr.length - 1).toFixed(0)}%) ~ ${secondsToTime((arr.length - i) * 4)}`, 1000);
+                    }
+                } else {
+                    let d = await window.electron.getData(storeData.filePath, headers, arr[0], arr[1], dataType, "init")
+                    storeData["csvData"] = d.data.slice(0, 10)
+                    dataType = d.dataType
+
+                }
+                dataType = checkForAbsolute(dataType)
+                storeData["dataTypes"] = dataType;
+                dispatch(setStoreData(storeData));
+
+            } else {
+                toast({
+                    title: <Text fontSize={'sm'}>File not found</Text>,
+                    status: "error",
+                    duration: 3000,
+                    variant: "subtle"
+                });
+                navigate('/upload');
+                return;
+            }
+            await setStatusWithDelay("Identifying data types ...", 1000);
+            setIsParsed(true);
+            setIsLoading(false);
+            await setStatusWithDelay("", 1000);
 
 
-    const StatusComponent = ({ status }) => {
-        return (
-            <Text my={'auto'} fontSize={'sm'} className={`fade-in ${status !== '' ? 'show' : ''}`}>{status}</Text>
-        )
-    }  
+        } catch (error) {
+            console.error("Error:", error);
+        }
+    };
+
+    useEffect(() => {
+        fetchData()
+    }, [])
+
     return (
-        isParsed ?
-            <>
-            <Flex mt={15} mb={50} className="fade-in">
-                <VStack m={'auto'} justifyContent={'center'} gap={5}>
-                    <Image src={logo} boxSize='100px' alt='logo' borderRadius={"20px"} />
-                    <Box p={10} boxShadow={"md"} borderRadius={10}>
-                        <Box width={"600px"}>
-                            <Text fontSize={'sm'} fontWeight={'bold'}>Fields ({columns.length})</Text>
-                            <Box mt={2} >
+        <>
+            <Flex height="60vh" flexDirection="row">
+                <Box p={2} width={"25%"} bg={"aliceblue"}>
+                    <Flex gap={1} p={3} justifyContent={'center'}>
+                        <Image src={logo} boxSize='30px' alt='logo' borderRadius={"20px"} />
+                        <Text my={'auto'} fontWeight={"bold"} fontSize={"lg"}>NeoPort</Text>
+                    </Flex>
+                    {
+                        columns.length !== 0 ?
+                        <Flex p={1}>
+                            <Box borderRadius={5} bg={"white"} w={"100%"} p={3} height={"50vh"} overflow={"auto"}>
                                 {
                                     columns.map((item, index) => (
-                                        <Tag px={4} key={index} m={1}>
+                                        <Tag px={4} key={index} m={1} bg={"gray.100"} shadow={'sm'}>
                                             <TagLabel fontSize={11}>{item}</TagLabel>
                                         </Tag>
                                     ))
                                 }
                             </Box>
-                        </Box>
+                        </Flex> :
+                        <Flex borderRadius={5} bg={"white"} w={"100%"} p={5} gap={4} justifyContent={'center'}>
+                            <Spinner size={'md'} thickness="4px" emptyColor='gray.200' color='blue.500'/>
+                            <Text my={"auto"} fontSize={'sm'}>Identifying headers</Text>
+                        </Flex>
+                    }
+                </Box>
+                <Center height='60vh'>
+                    <Divider orientation='vertical' />
+                </Center>
+                <Box width={"50%"}>
+                    <Box overflowX="auto" maxWidth="100%">
+
                     </Box>
-                    <Box p={10} boxShadow={"md"} borderRadius={10}>
-                        <Text fontSize={'sm'} fontWeight={'bold'}>Fields and Types ({storeData && storeData.length > 1 ? storeData.length : 0})</Text>
-                        <HStack mt={2}>
-                            <TableContainer width={"600px"} height={"400px"} overflow={'auto'}>
-                                <Table variant='striped' size={'sm'}>
-                                    <Thead>
-                                        <Tr>
-                                            <Th></Th>
-                                            {
-                                                columns.length !== 0 &&
-                                                columns.map((item, columnIndex) => (
+                </Box>
+                <Center height='60vh'>
+                    <Divider orientation='vertical' />
+                </Center>
+                <Box p={3} width={"25%"}>
+                    <Text>Third Section</Text>
+                    <VStack spacing={4}>
+                        <Card width={"100%"}>
+                            <Button onClick={() => handleBack()}>Back</Button>
+                        </Card>
+                    </VStack>
+                </Box>
+            </Flex>
+            <Divider/>
+            <Flex height={"35vh"} bg={"white"} p={3} pb={0}>
+                {
+                    storeData.csvData.length > 0 && storeData.dataTypes ?
+                        <TableContainer overflowY={'scroll'}>
+                            <Table variant='striped' size={'sm'}>
+                                <Thead>
+                                    <Tr>
+                                        <Th></Th>
+                                        {columns.length !== 0 && storeData.dataTypes &&
+                                            columns.map((item, columnIndex) => (
+                                                <Th py={3} role="button" minWidth={170} key={columnIndex} bg={storeData.dataTypes?.[item]?.abs !== true ? "aliceblue" : "white"}>
                                                     <Tooltip
                                                         hasArrow
-                                                        key={columnIndex}
-                                                        label={<NTooltip {...storeData.dataTypes[columnIndex]} />}
+                                                        label={<NTooltip {...storeData.dataTypes[item]} />}
                                                         placement={"top"}
                                                         p={3}
                                                         fontSize={'xs'}
                                                         borderRadius={5}
-                                                        isDisabled={!storeData.dataTypes[columnIndex].abs}
+                                                        isDisabled={storeData.dataTypes[item].abs}
                                                     >
-                                                        <Th py={3} role="button" minWidth={170} key={columnIndex} bg={storeData.dataTypes[columnIndex].abs === true ? "aliceblue" : "white"}>
+                                                        <div>
                                                             <Text fontSize={13}>{item}</Text>
                                                             <Flex gap={2}>
                                                                 <Select
@@ -181,7 +256,7 @@ function Analyse() {
                                                                     size={'xs'}
                                                                     my={1}
                                                                     rounded={5}
-                                                                    value={storeData.dataTypes[columnIndex].maxDataType}
+                                                                    value={storeData.dataTypes[item].maxDataType}
                                                                     onChange={handleColumnTypeChange}
                                                                 >
                                                                     <option value='string'>string</option>
@@ -189,76 +264,67 @@ function Analyse() {
                                                                     <option value='float'>float</option>
                                                                     <option value='boolean'>boolean</option>
                                                                 </Select>
-                                                                {storeData.dataTypes[columnIndex].abs === true && <Box my={'auto'}><MdInfo fontSize={16} /></Box>}
+                                                                {storeData.dataTypes[item].abs !== true && <Box my={'auto'}><MdInfo fontSize={16} /></Box>}
                                                             </Flex>
-                                                        </Th>
+                                                        </div>
                                                     </Tooltip>
-                                                ))
-                                            }
-                                        </Tr>
-                                    </Thead>
-                                    <Tbody>
-                                        {
-                                            storeData.csvData.length > 0 ? (
-                                                storeData.csvData.map((item, index) => (
-                                                    <Tr key={index}>
-                                                        <Td color={"gray"} fontSize={'xs'}>{index + 1}</Td>
-                                                        {Object.values(item).map((item_, index_) => (
-                                                            <Td
-                                                                key={index_}
-                                                                fontSize={'xs'}
-                                                                bg={storeData.dataTypes[index_] && storeData.dataTypes[index_].abs === true ? "aliceblue" : "white"}
-                                                            >
-                                                                {item_ === true ? (
-                                                                    <b style={{ color: "gray" }}>true</b>
-                                                                ) : item_ === false ? (
-                                                                    <b style={{ color: "gray" }}>false</b>
-                                                                ) : (
-                                                                    item_
-                                                                )}
-                                                            </Td>
-                                                        ))}
-                                                    </Tr>
-                                                ))
-                                            ) : (
-                                                <tr>
-                                                    <td >No data available</td>
-                                                </tr>
-                                            )
+                                                </Th>
+                                            ))
                                         }
-            
-                                    </Tbody>
-                                </Table>
-                            </TableContainer>
-                        </HStack>
-                        <Flex justifyContent={'end'} p={5} gap={3}>
-                            <Button size={'sm'} onClick={() => handleBack()}>Cancel</Button>
-                            <Button size={'sm'} colorScheme="blue">Import</Button>
+                                    </Tr>
+                                </Thead>
+        
+        
+                                <Tbody>
+                                    {
+                                        storeData.csvData.map((item, index) => (
+                                            <Tr key={index}>
+                                                <Td color={"gray"} fontSize={'xs'}>{index + 1}</Td>
+                                                {Object.values(item).map((item_, index_) => (
+                                                    <Td
+                                                        key={index_}
+                                                        fontSize={'xs'}
+                                                        bg={storeData.dataTypes[columns[index_]]?.abs !== true ? "aliceblue" : "white"}
+                                                    >
+        
+                                                        {item_ === true ? (
+                                                            <b style={{ color: "gray" }}>true</b>
+                                                        ) : item_ === false ? (
+                                                            <b style={{ color: "gray" }}>false</b>
+                                                        ) : (
+                                                            <Box dangerouslySetInnerHTML={{ __html: typeof item_ === 'object' ? JSON.stringify(item_) : item_ }}></Box>
+                                                        )}
+                                                    </Td>
+                                                ))}
+                                            </Tr>
+                                        ))
+                                    }
+                                </Tbody>
+                            </Table>
+                        </TableContainer>
+                        : 
+                        <Flex borderRadius={5} bg={"white"} m={"auto"} w={"100%"} p={5} gap={4} justifyContent={'center'}>
+                            <Spinner size={'md'} thickness="4px" emptyColor='gray.200' color='blue.500'/>
+                            <Text my={"auto"} fontSize={'sm'}>Loading Data</Text>
                         </Flex>
-                    </Box>
-                </VStack>
+                    
+                }
+
             </Flex>
-            </>
-            : <>
-                <Flex height={"100vh"} className="fade-in" mt={15} mb={50}>
-                    <VStack m={'auto'} justifyContent={'center'} gap={5} >
-                        <Image src={logo} boxSize='100px' alt='logo' borderRadius={"20px"} />
-                        <Box p={10} boxShadow={"md"} borderRadius={10} minW={"300px"}>
-                            {
-                                isLoading &&
-                                <Flex gap={3} justifyContent={'center'}>
-                                    <Spinner thickness='4px' my={'auto'} />
-                                    <StatusComponent status={status} />
-                                </Flex>
-                            }
-                        </Box>
-                        <Flex ml={'auto'} mr={0}>
-                            <Button size={'xs'} onClick={() => handleBack()}>Cancel</Button>
-                        </Flex>
-                    </VStack>
+            <Divider/>
+            <Flex height={"4vh"} justifyContent={"end"} px={10} mt={1}>
+                <Flex gap={3} my={'auto'}>
+                    <Text fontSize={'xs'} my={"auto"} >{status}Hello</Text>
+                    <Center height='4vh' my={'auto'}>
+                        <Divider orientation='vertical' />
+                    </Center>
+                    <Box my={"auto"} role="button">
+                        <FcDeleteDatabase />
+                    </Box>
                 </Flex>
-            </>
-    )
+            </Flex>
+        </>
+    );
 }
 
 export default Analyse;

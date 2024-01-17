@@ -5,10 +5,10 @@ const path = require('path')
 const createMainWindow = () => {
     const mainWindow = new BrowserWindow({
         title: "NeoPort",
-        minWidth: 1000,
-        minHeight: 600,
-        width: 1000,
-        height: 600,
+        minWidth: 1200,
+        minHeight: 800,
+        width: 1200,
+        height: 800,
         webPreferences: {
             contextIsolation: true,
             nodeIntegration: true,

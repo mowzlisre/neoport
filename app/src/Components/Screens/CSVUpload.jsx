@@ -25,7 +25,6 @@ const CSVUpload = () => {
     const navigate = useNavigate()
     const dispatch = useDispatch();
     const csvData = useSelector((state) => state.csvData)
-    const headers = useSelector((state) => state.csvData.headers);
     const dropzoneRef = useRef(null);
     const fileInputRef = useRef(null);
 
@@ -35,7 +34,7 @@ const CSVUpload = () => {
         if (files.length > 0) {
             const file = files[0];
             if (file.type === 'text/csv' || /\.csv$/.test(file.name)) {
-                dispatch(setStoreData({csvData: {}, filePath: file.path, fileName: file.name, fileSize: file.size, headers: headers}));
+                dispatch(setStoreData({csvData: {}, filePath: file.path, fileName: file.name, fileSize: file.size, headers: csvData["headers"]}));
             } else {
                 toast({
                     title: <Text fontSize={'sm'}>Unsupported File Type</Text>,
@@ -86,14 +85,21 @@ const CSVUpload = () => {
     }
 
     const handleFileCancel = () => {
-        dispatch(setStoreData({csvData: {}, fileName: null, fileSize: null}));
+        csvData["csvData"] = {}
+        csvData["fileName"] = null
+        csvData["fileSize"] = null
+        dispatch(setStoreData(csvData));
 
     }
 
     const handleHeadersChange = () => {
-        const newHeadersValue = ! headers; 
-        dispatch(setHeaders(newHeadersValue)); 
+        csvData["headers"] = !csvData["headers"]
+        dispatch(setStoreData(csvData)); 
     };
+
+    const handleAnalyse = () => {
+        navigate('/analyse')
+    }
     
     return (
         <div>
@@ -142,15 +148,14 @@ const CSVUpload = () => {
                                 </Flex>
                                 <Flex textAlign={'start'}
                                     w={"100%"}>
-                                    <Checkbox defaultChecked={headers}
+                                    <Checkbox defaultChecked={csvData["headers"]}
                                         onChange={handleHeadersChange}
                                         size={'sm'}>
                                         <Text fontSize={'xs'}>Has Headers</Text>
                                     </Checkbox>
                                 </Flex>
                                 <Button size={'sm'}
-                                    onClick={() => navigate('/analyse')
-                                }>Analyse</Button>
+                                    onClick={handleAnalyse}>Analyse</Button>
                             </VStack>
                         ) : (
                             <>
