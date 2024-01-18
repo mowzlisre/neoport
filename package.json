@@ -14,6 +14,7 @@
   "license": "MIT",
   "dependencies": {
     "electron-squirrel-startup": "^1.0.0",
+    "neo4j-driver": "^5.16.0",
     "papaparse": "^5.4.1"
   },
   "devDependencies": {

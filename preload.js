@@ -2,6 +2,9 @@ const { contextBridge, shell } = require("electron");
 const fs = require('fs');
 const Papa = require('papaparse');
 const { identifyDataType } = require("./lib/parser");
+const { loadPreferences, savePreferences } = require("./lib/preferences");
+const { getDataBaseStatus } = require("./lib/neo4j");
+
 
 contextBridge.exposeInMainWorld('electron', {
     openHttp: (url) => {
@@ -82,5 +85,19 @@ contextBridge.exposeInMainWorld('electron', {
                     }
                 });
         });
+    }
+});
+
+contextBridge.exposeInMainWorld('settings', {
+    getPref: () => loadPreferences(),
+    setPref: (preferences) =>  savePreferences(preferences),
+    testConnection: async () => {
+        try {
+            const status = await getDataBaseStatus();
+            return status;
+        } catch (error) {
+            console.error('Error testing connection:', error);
+            return "error";
+        }
     }
 });

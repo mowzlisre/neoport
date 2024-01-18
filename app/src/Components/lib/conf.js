@@ -39,3 +39,11 @@ export const formatFileSize = (fileSizeInBytes) =>  {
       return `${fileSizeInGB} GB`;
     }
   }
+
+export const defaultConf = {
+  database : {
+      URI : "neo4j://localhost:7687",
+      username:"neo4j",
+      password:"12345678"
+  }
+}

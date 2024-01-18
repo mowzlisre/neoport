@@ -21,7 +21,7 @@ const createMainWindow = () => {
         pathname: path.join( __dirname, 'app/build/index.html'),
         protocol: 'file'
     })
-    // mainWindow.loadURL(startUrl)
+    //mainWindow.loadURL(startUrl)
 
     mainWindow.loadURL("http://localhost:3000")
 }

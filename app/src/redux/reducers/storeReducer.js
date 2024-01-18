@@ -1,13 +1,164 @@
-const initialState = {
-  filePath: null,
-  fileName: null,
-  fileSize: null,
-  headers: true,
-  dataTypes: {},
-  parseDataTypes: false,
-  // Add any other state properties you need
-};
+// const initialState = {
+//   filePath: null,
+//   fileName: null,
+//   fileSize: null,
+//   headers: true,
+//   dataTypes: {},
+//   parseDataTypes: false,
+//   // Add any other state properties you need
+// };
 
+const initialState = {
+  "filePath": "/Users/MowzliSreGWU/Desktop/Dats_Grade.csv",
+  "fileName": "Dats_Grade.csv",
+  "fileSize": 5769,
+  "headers": true,
+  "dataTypes": {
+      "H1": {
+          "NULL": 0,
+          "LIST": 0,
+          "MAP": 0,
+          "BOOLEAN": 0,
+          "INTEGER": 0,
+          "FLOAT": 0,
+          "STRING": 0,
+          "ByteArray": 0,
+          "abs": true
+      },
+      "H2": {
+          "NULL": 0,
+          "LIST": 0,
+          "MAP": 0,
+          "BOOLEAN": 0,
+          "INTEGER": 0,
+          "FLOAT": 0,
+          "STRING": 0,
+          "ByteArray": 0,
+          "abs": true
+      },
+      "H3": {
+          "NULL": 0,
+          "LIST": 0,
+          "MAP": 0,
+          "BOOLEAN": 0,
+          "INTEGER": 0,
+          "FLOAT": 0,
+          "STRING": 0,
+          "ByteArray": 0,
+          "abs": true
+      },
+      "H4": {
+          "NULL": 0,
+          "LIST": 0,
+          "MAP": 0,
+          "BOOLEAN": 0,
+          "INTEGER": 0,
+          "FLOAT": 0,
+          "STRING": 0,
+          "ByteArray": 0,
+          "abs": true
+      },
+      "H5": {
+          "NULL": 0,
+          "LIST": 0,
+          "MAP": 0,
+          "BOOLEAN": 0,
+          "INTEGER": 0,
+          "FLOAT": 0,
+          "STRING": 0,
+          "ByteArray": 0,
+          "abs": true
+      },
+      "H6": {
+          "NULL": 0,
+          "LIST": 0,
+          "MAP": 0,
+          "BOOLEAN": 0,
+          "INTEGER": 0,
+          "FLOAT": 0,
+          "STRING": 0,
+          "ByteArray": 0,
+          "abs": true
+      },
+      "H7": {
+          "NULL": 0,
+          "LIST": 0,
+          "MAP": 0,
+          "BOOLEAN": 0,
+          "INTEGER": 0,
+          "FLOAT": 0,
+          "STRING": 0,
+          "ByteArray": 0,
+          "abs": true
+      },
+      "H8": {
+          "NULL": 0,
+          "LIST": 0,
+          "MAP": 0,
+          "BOOLEAN": 0,
+          "INTEGER": 0,
+          "FLOAT": 0,
+          "STRING": 0,
+          "ByteArray": 0,
+          "abs": true
+      },
+      "Q1": {
+          "NULL": 0,
+          "LIST": 0,
+          "MAP": 0,
+          "BOOLEAN": 0,
+          "INTEGER": 0,
+          "FLOAT": 0,
+          "STRING": 0,
+          "ByteArray": 0,
+          "abs": true
+      },
+      "Q2": {
+          "NULL": 0,
+          "LIST": 0,
+          "MAP": 0,
+          "BOOLEAN": 0,
+          "INTEGER": 0,
+          "FLOAT": 0,
+          "STRING": 0,
+          "ByteArray": 0,
+          "abs": true
+      },
+      "Proj1": {
+          "NULL": 0,
+          "LIST": 0,
+          "MAP": 0,
+          "BOOLEAN": 0,
+          "INTEGER": 0,
+          "FLOAT": 0,
+          "STRING": 0,
+          "ByteArray": 0,
+          "abs": true
+      },
+      "Proj2": {
+          "NULL": 0,
+          "LIST": 0,
+          "MAP": 0,
+          "BOOLEAN": 0,
+          "INTEGER": 0,
+          "FLOAT": 0,
+          "STRING": 0,
+          "ByteArray": 0,
+          "abs": true
+      },
+      "Bool": {
+          "NULL": 0,
+          "LIST": 0,
+          "MAP": 0,
+          "BOOLEAN": 0,
+          "INTEGER": 0,
+          "FLOAT": 0,
+          "STRING": 0,
+          "ByteArray": 0,
+          "abs": true
+      }
+  }
+}
 
 const storeReducer = (state = initialState, action) => {
   switch (action.type) {

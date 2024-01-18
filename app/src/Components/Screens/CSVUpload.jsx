@@ -20,6 +20,8 @@ import { TbCsv } from "react-icons/tb";
 import { setStoreData, setHeaders } from '../../redux/actions/storeActions';
 import { useNavigate } from 'react-router-dom';
 import { formatFileSize } from '../lib/conf';
+import { FcSettings } from 'react-icons/fc';
+import SettingsModal from '../Settings/SettingsModal';
 
 const CSVUpload = () => {
     const navigate = useNavigate()
@@ -27,6 +29,10 @@ const CSVUpload = () => {
     const storeData = useSelector((state) => state.storeData)
     const dropzoneRef = useRef(null);
     const fileInputRef = useRef(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const openModal = () => setIsModalOpen(true);
+    const closeModal = () => setIsModalOpen(false);
+    const [dbStatus, setDbStatus] = useState('unknown')
 
     const toast = useToast();
 
@@ -55,6 +61,7 @@ const CSVUpload = () => {
     };
 
     useEffect(() => {
+        openModal()
         if (!dropzoneRef.current) {
             return;
         }
@@ -148,9 +155,13 @@ const CSVUpload = () => {
                             </>
                         )
                         } </Box>
-                    <Flex ml={'auto'} mr={0}> <Button size={'xs'} onClick={() => handleBack()}>Cancel</Button>
+
+                    <Flex ml={'auto'} mr={0}>
+                        <Button size={'xs'} onClick={() => handleBack()}>Cancel</Button>
+                        <FcSettings onClick={openModal} />
                     </Flex>
                 </VStack>
+            <SettingsModal isOpen={isModalOpen} onClose={closeModal} dbStatus={dbStatus} setDbStatus={setDbStatus}/>
             </Flex>
         </div>
     );
