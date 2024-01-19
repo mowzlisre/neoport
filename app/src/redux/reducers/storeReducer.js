@@ -1,18 +1,25 @@
-// const initialState = {
-//   filePath: null,
-//   fileName: null,
-//   fileSize: null,
-//   headers: true,
-//   dataTypes: {},
-//   parseDataTypes: false,
-//   // Add any other state properties you need
-// };
-
 const initialState = {
+  csvData : {},
+  filePath: null,
+  fileName: null,
+  fileSize: null,
+  headers: true,
+  nodes : {},
+  relationships : {},
+  dataTypes: {},
+  parseDataTypes: false,
+  // Add any other state properties you need
+};
+
+const initialState_ = {
+  "csvData" : {},
   "filePath": "/Users/MowzliSreGWU/Desktop/Dats_Grade.csv",
   "fileName": "Dats_Grade.csv",
   "fileSize": 5769,
   "headers": true,
+  "nodes" : {},
+  "parseDataTypes": false,
+  "relationships" : {},
   "dataTypes": {
       "H1": {
           "NULL": 0,

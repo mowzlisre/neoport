@@ -1,6 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { useDropzone } from 'react-dropzone';
-import Papa from 'papaparse';
+import React, { useCallback, useEffect, useRef } from 'react';
 import {
     Flex,
     VStack,
@@ -9,19 +7,15 @@ import {
     Image,
     Button,
     useToast,
-    Input,
     Checkbox,
-    Spinner
 } from "@chakra-ui/react"
 import { TiTimes } from "react-icons/ti";
 import logo from "../../logo.png";
 import { useDispatch, useSelector } from 'react-redux';
 import { TbCsv } from "react-icons/tb";
-import { setStoreData, setHeaders } from '../../redux/actions/storeActions';
+import { setStoreData } from '../../redux/actions/storeActions';
 import { useNavigate } from 'react-router-dom';
 import { formatFileSize } from '../lib/conf';
-import { FcSettings } from 'react-icons/fc';
-import SettingsModal from '../Settings/SettingsModal';
 
 const CSVUpload = () => {
     const navigate = useNavigate()
@@ -29,14 +23,10 @@ const CSVUpload = () => {
     const storeData = useSelector((state) => state.storeData)
     const dropzoneRef = useRef(null);
     const fileInputRef = useRef(null);
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const openModal = () => setIsModalOpen(true);
-    const closeModal = () => setIsModalOpen(false);
-    const [dbStatus, setDbStatus] = useState('unknown')
 
     const toast = useToast();
 
-    const handleFile = (files) => {
+    const handleFile = useCallback((files) => {
         if (files.length > 0) {
             const file = files[0];
             if (file.type === 'text/csv' || /\.csv$/.test(file.name)) {
@@ -50,7 +40,8 @@ const CSVUpload = () => {
                 });
             }
         }
-    }
+    }, [dispatch, storeData, toast]);
+    
 
     const openFileDialog = () => {
         fileInputRef.current.click();
@@ -61,30 +52,30 @@ const CSVUpload = () => {
     };
 
     useEffect(() => {
-        openModal()
         if (!dropzoneRef.current) {
             return;
         }
         const handleDragOver = (e) => {
             e.preventDefault();
         };
-
+    
         const handleDrop = (e) => {
             e.preventDefault();
             const files = e.dataTransfer.files;
             handleFile(files)
-
+    
         };
-
+    
         const dropzone = dropzoneRef.current;
         dropzone.addEventListener('dragover', handleDragOver);
         dropzone.addEventListener('drop', handleDrop);
-
+    
         return () => {
             dropzone.removeEventListener('dragover', handleDragOver);
             dropzone.removeEventListener('drop', handleDrop);
         };
-    }, []);
+    }, [handleFile]);
+    
 
 
     const handleBack = () => {
@@ -158,10 +149,8 @@ const CSVUpload = () => {
 
                     <Flex ml={'auto'} mr={0}>
                         <Button size={'xs'} onClick={() => handleBack()}>Cancel</Button>
-                        <FcSettings onClick={openModal} />
                     </Flex>
                 </VStack>
-            <SettingsModal isOpen={isModalOpen} onClose={closeModal} dbStatus={dbStatus} setDbStatus={setDbStatus}/>
             </Flex>
         </div>
     );

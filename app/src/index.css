@@ -33,3 +33,35 @@ code {
     opacity: 1;
   }
 }
+
+::-webkit-scrollbar {
+  width: 4px; 
+  border-radius: 5px; 
+  height: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #2765c74c; 
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #3079d94c;
+}
+
+::-webkit-scrollbar-track {
+  background: #abd2ec4c; 
+}
+
+::-webkit-scrollbar-track-piece:start {
+  background: transparent; 
+}
+
+::-webkit-scrollbar-track-piece:end {
+  background: transparent;
+}
+
+.scroll-hidden {
+  scrollbar-width: none; 
+  -webkit-scrollbar-width: none; 
+}

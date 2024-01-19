@@ -4,7 +4,7 @@ import { setStoreData } from "../../redux/actions/storeActions";
 import { useDispatch } from "react-redux";
 import NTooltip from "./NTooltip";
 
-const PreviewTab = ({ sample, storeData, columns }) => {
+const PreviewTab = ({ storeData, columns }) => {
     const dispatch = useDispatch();
 
     const handleColumnTypeChange = (e, columnIndex) => {
@@ -19,9 +19,9 @@ const PreviewTab = ({ sample, storeData, columns }) => {
 
         <Flex height={"35.5vh"} bg={"hite"} p={3} pb={0}>
             {
-                sample.length > 0 && storeData.dataTypes ?
-                    <TableContainer overflowY={'scroll'}>
-                        <Table variant='striped' size={'sm'}>
+                storeData["csvData"].length > 0 && storeData.dataTypes ?
+                    <TableContainer overflowY={'auto'}>
+                        <Table variant='striped' size={'sm'} className="scrollbar">
                             <Thead>
                                 <Tr>
                                     <Th></Th>
@@ -70,7 +70,7 @@ const PreviewTab = ({ sample, storeData, columns }) => {
 
                             <Tbody>
                                 {
-                                    sample.map((item, index) => (
+                                    storeData["csvData"].map((item, index) => (
                                         <Tr key={index}>
                                             <Td color={"gray"} fontSize={'xs'}>{index + 1}</Td>
                                             {Object.values(item).map((item_, index_) => (

@@ -10,7 +10,7 @@ export function secondsToTime(seconds) {
     return `${minutesStr}m ${secondsStr}s`;
 }
 
-export const fetchData = async (storeData, setN, setColumns, setSample, dispatch, navigate, toast, setStatus) => {
+export const fetchData = async (storeData, setN, setColumns, dispatch, navigate, toast, setStatus) => {
     try {
         setStatus("Reading file")
         let headers = []
@@ -34,7 +34,7 @@ export const fetchData = async (storeData, setN, setColumns, setSample, dispatch
                 for (let i = 0; i < arr.length - 1; i++) {
                     let d = await window.electron.getData(storeData.filePath, headers, arr[i], arr[i + 1], dataType, parseType)
                     if (i === 0) {
-                        setSample(d.data.slice(0, 10))
+                        storeData["csvData"] = d.data.slice(0, 10)
                         dispatch(setStoreData(storeData));
                     }
                     dataType = d.dataType
@@ -42,7 +42,7 @@ export const fetchData = async (storeData, setN, setColumns, setSample, dispatch
                 }
             } else {
                 let d = await window.electron.getData(storeData.filePath, headers, arr[0], arr[1], dataType, parseType)
-                setSample(d.data.slice(0, 10))
+                storeData["csvData"] = d.data.slice(0, 10)
                 dataType = d.dataType
             }
             dataType = checkForAbsolute(dataType, storeData.parseDataTypes)
