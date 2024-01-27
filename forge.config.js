@@ -5,8 +5,19 @@ module.exports = {
   rebuildConfig: {},
   makers: [
     {
-      name: '@electron-forge/maker-squirrel',
-      config: {},
+      name: '@electron-forge/maker-wix',
+      config: {
+        // Configuration options here
+        appDirectory: './out/neoport-win32-x64', // Replace with your app's output directory
+        authors: 'Mowzli Sre',
+        exe: 'neoport.exe',
+        description: 'Your App Description',
+        language: 1033, // English - United States
+        name: 'neoport',
+        shortName: 'Neo',
+        version: '1.0.0', // Your app version
+        // Other configuration options...
+      },
     },
     {
       name: '@electron-forge/maker-zip',
@@ -20,10 +31,9 @@ module.exports = {
       name: '@electron-forge/maker-rpm',
       config: {},
     },
-    // Add the DMG maker configuration here
     {
       name: '@electron-forge/maker-dmg',
-      platforms: ['darwin'], // Specify this maker for macOS (darwin) only
+      platforms: ['darwin'],
     },
   ],
   plugins: [

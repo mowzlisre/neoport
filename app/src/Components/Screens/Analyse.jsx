@@ -42,7 +42,7 @@ function Analyse() {
                     <Divider orientation='vertical' bg={"aliceblue"} />
                 </Center>
                 <Box width={"50%"}>
-                    <EntitySandBox {...{storeData, current, setCurrent}}/>
+                    <EntitySandBox {...{storeData, current, setCurrent, columns}}/>
                 </Box>
                 <Center height='60vh'>
                     <Divider orientation='vertical' bg={"aliceblue"} />

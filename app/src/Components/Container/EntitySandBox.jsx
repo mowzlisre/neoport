@@ -1,15 +1,37 @@
-import { Box, Button, Divider, Flex, Input, InputGroup, InputLeftAddon, Select, Text } from "@chakra-ui/react";
+import { Box, Button, Divider, Flex, Input, InputGroup, InputLeftAddon, Radio, RadioGroup, Select, Text } from "@chakra-ui/react";
 import { useEffect } from "react";
 import { setStoreData } from "../../redux/actions/storeActions";
 
-const EntitySandBox = ({ storeData, current, setCurrent }) => {
+const EntitySandBox = ({ storeData, current, setCurrent, columns }) => {
     const handleEntityNameChange = (e) => {
-        setCurrent((prevCurrent) => ({
-            ...prevCurrent,
-            name: e.target.value,
-        }));
+        const value = e.target.value;
+        const validNamePattern = /^[a-zA-Z0-9_]+$/;
+    
+        if (value === '' || validNamePattern.test(value)) {
+            setCurrent((prevCurrent) => ({
+                ...prevCurrent,
+                name: value,
+            }));
+        }
     };
     
+    
+    const handleSetNodeIndex = (val) => {
+        setCurrent((prevCurrent) => ({
+            ...prevCurrent,
+            index: val
+        }));
+    }
+
+    const isDuplicate = (value) => {
+        if(value !== ''){
+            const count = Object.values(current.parameters).filter((param) => param.key === value).length;
+            return count > 1;
+        } else{
+            return true
+        }
+    };
+
     const handleNode1Change = (e) => {
         setCurrent((prevCurrent) => ({
             ...prevCurrent,
@@ -25,17 +47,22 @@ const EntitySandBox = ({ storeData, current, setCurrent }) => {
     };
 
     const handleParameterKeyChange = (key, newValue) => {
-        setCurrent((prevCurrent) => {
-            const updatedParameters = {
-                ...prevCurrent.parameters,
-                [key]: { ...prevCurrent.parameters[key], key: newValue },
-            };
-            return {
-                ...prevCurrent,
-                parameters: updatedParameters,
-            };
-        });
+        const validKeyPattern = /^[a-zA-Z0-9_]+$/;
+    
+        if (newValue === '' || validKeyPattern.test(newValue)) {
+            setCurrent((prevCurrent) => {
+                const updatedParameters = {
+                    ...prevCurrent.parameters,
+                    [key]: { ...prevCurrent.parameters[key], key: newValue },
+                };
+                return {
+                    ...prevCurrent,
+                    parameters: updatedParameters,
+                };
+            });
+        }
     };
+    
     
     const handleParameterValueChange = (key, newValue) => {
         setCurrent((prevCurrent) => {
@@ -50,6 +77,7 @@ const EntitySandBox = ({ storeData, current, setCurrent }) => {
         });
     };
     
+    
     const addParameter = () => {
         setCurrent((prevCurrent) => {
             const newParameters = {
@@ -63,8 +91,28 @@ const EntitySandBox = ({ storeData, current, setCurrent }) => {
         });
     };
 
-    
     const saveEntity = () => {
+        const isNameValid = current.name && current.name.trim() !== '';
+    
+        const allParametersValid = Object.values(current.parameters).every(param => param.value.trim() !== '');
+
+        const allKeysValid = Object.values(current.parameters).every(param => param.value.trim() !== '');
+    
+        if (!isNameValid || !allParametersValid || !allKeysValid) {
+            let errorMessage = '';
+            if (!isNameValid) {
+                errorMessage += 'Entity Name cannot be empty. ';
+            }
+            if (!allKeysValid){                
+                errorMessage += 'Attributes name cannot be empty';
+            }
+            if (!allParametersValid) {
+                errorMessage += 'Some attributes are not mapped. Please verify';
+            }
+            alert(errorMessage);
+            return; 
+        }
+    
         if (current && current.type === "node") {
             const newNodeData = {
                 ...current,
@@ -82,10 +130,12 @@ const EntitySandBox = ({ storeData, current, setCurrent }) => {
             updatedRelationships[current.name] = newRelationshipData;
             storeData.relationships = updatedRelationships;
         }
-        setStoreData(storeData)
+        setStoreData(storeData);
     
         setCurrent({});
     };
+    
+    
 
     return (
         current && (
@@ -115,53 +165,42 @@ const EntitySandBox = ({ storeData, current, setCurrent }) => {
                                     <Text fontSize={"sm"} fontWeight={"bold"} mb={3}>
                                         Parameters
                                     </Text>
-                                    {Object.keys(current.parameters).length > 0 ? (
-                                        Object.entries(current.parameters).map(([key, param]) => (
-                                            <Flex key={key}>
-                                                <Input
-                                                    _focus={{ boxShadow: "none", outline: "none" }}
-                                                    borderRadius={0}
-                                                    px={3}
-                                                    width={"30%"}
-                                                    size={"sm"}
-                                                    value={param.key}
-                                                    placeholder='params'
-                                                    onChange={(e) => handleParameterKeyChange(key, e.target.value)}
-                                                />
-                                                <Input
-                                                    _focus={{ boxShadow: "none", outline: "none" }}
-                                                    borderRadius={0}
-                                                    px={3}
-                                                    width={"70%"}
-                                                    size={"sm"}
-                                                    value={param.value}
-                                                    placeholder='value'
-                                                    onChange={(e) => handleParameterValueChange(key, e.target.value)}
-                                                />
-                                            </Flex>
-                                        ))
-                                    ) : (
-                                        <Flex>
-                                            <Input
-                                                _focus={{ boxShadow: "none", outline: "none" }}
-                                                borderRadius={0}
-                                                px={3}
-                                                width={"30%"}
-                                                size={"sm"}
-                                                placeholder='params'
-                                                onChange={(e) => handleParameterKeyChange(0, e.target.value)}
-                                            />
-                                            <Input
-                                                _focus={{ boxShadow: "none", outline: "none" }}
-                                                borderRadius={0}
-                                                px={3}
-                                                width={"70%"}
-                                                size={"sm"}
-                                                placeholder='value'
-                                                onChange={(e) => handleParameterValueChange(0, e.target.value)}
-                                            />
-                                        </Flex>
-                                    )}
+                                    <RadioGroup onChange={handleSetNodeIndex} value={current.index}>
+                                        {
+                                            Object.entries(current.parameters).map(([key, param]) => (
+                                                <Flex key={key}>
+                                                    <Radio width={"7%"} value={param.key} isDisabled={isDuplicate(param.key)} />
+                                                    <Input
+                                                        _focus={{ boxShadow: "none", outline: "none" }}
+                                                        borderRadius={0}
+                                                        px={3}
+                                                        width={"30%"}
+                                                        size={"sm"}
+                                                        value={param.key}
+                                                        placeholder='params'
+                                                        onChange={(e) => handleParameterKeyChange(key, e.target.value)}
+                                                    />
+                                                    <Select
+                                                        _focus={{ boxShadow: "none", outline: "none" }}
+                                                        borderRadius={0}
+                                                        px={3}
+                                                        width={"63%"}
+                                                        size={"sm"}
+                                                        value={param.value}
+                                                        onChange={(e) => handleParameterValueChange(key, e.target.value)}
+                                                    >
+                                                        <option disabled value="">--- Select a field ---</option>
+                                                        {columns.map((column, index) => (
+                                                            <option key={index} value={column}>
+                                                                {column}
+                                                            </option>
+                                                        ))}
+                                                    </Select>
+
+                                                </Flex>
+                                            ))
+                                        }
+                                    </RadioGroup>
 
                                 </Box>
                             </Flex>
@@ -234,9 +273,11 @@ const EntitySandBox = ({ storeData, current, setCurrent }) => {
                                     <Text fontSize={"sm"} fontWeight={"bold"} mb={3}>
                                         Parameters
                                     </Text>
-                                    {Object.keys(current.parameters).length > 0 ? (
+                                    <RadioGroup onChange={handleSetNodeIndex} value={current.index}>
+                                    {
                                         Object.entries(current.parameters).map(([key, param]) => (
                                             <Flex key={key}>
+                                                <Radio width={"7%"} value={param.key} isDisabled={isDuplicate(param.key)} />
                                                 <Input
                                                     _focus={{ boxShadow: "none", outline: "none" }}
                                                     borderRadius={0}
@@ -247,40 +288,26 @@ const EntitySandBox = ({ storeData, current, setCurrent }) => {
                                                     placeholder='params'
                                                     onChange={(e) => handleParameterKeyChange(key, e.target.value)}
                                                 />
-                                                <Input
+                                                <Select
                                                     _focus={{ boxShadow: "none", outline: "none" }}
                                                     borderRadius={0}
                                                     px={3}
-                                                    width={"70%"}
+                                                    width={"63%"}
                                                     size={"sm"}
                                                     value={param.value}
-                                                    placeholder='value'
                                                     onChange={(e) => handleParameterValueChange(key, e.target.value)}
-                                                />
+                                                >
+                                                    <option disabled value="">--- Select a field ---</option>
+                                                    {columns.map((column, index) => (
+                                                        <option key={index} value={column}>
+                                                            {column}
+                                                        </option>
+                                                    ))}
+                                                </Select>
                                             </Flex>
                                         ))
-                                    ) : (
-                                        <Flex>
-                                            <Input
-                                                _focus={{ boxShadow: "none", outline: "none" }}
-                                                borderRadius={0}
-                                                px={3}
-                                                width={"30%"}
-                                                size={"sm"}
-                                                placeholder='params'
-                                                onChange={(e) => handleParameterKeyChange(0, e.target.value)}
-                                            />
-                                            <Input
-                                                _focus={{ boxShadow: "none", outline: "none" }}
-                                                borderRadius={0}
-                                                px={3}
-                                                width={"70%"}
-                                                size={"sm"}
-                                                placeholder='value'
-                                                onChange={(e) => handleParameterValueChange(0, e.target.value)}
-                                            />
-                                        </Flex>
-                                    )}
+                                    }
+                                    </RadioGroup>
 
                                 </Box>
                             </Flex>

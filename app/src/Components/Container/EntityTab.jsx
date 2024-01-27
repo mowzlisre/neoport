@@ -7,6 +7,7 @@ const EntityTab = ({storeData, current, setCurrent}) => {
         setCurrent({
             parameters: {},
             type: "node",
+            index: ""
         })
     }
 
@@ -14,6 +15,7 @@ const EntityTab = ({storeData, current, setCurrent}) => {
         setCurrent({
             parameters: {},
             type: "relationships",
+            index: ""
         })
     }
 
