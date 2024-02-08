@@ -12,43 +12,35 @@ export function secondsToTime(seconds) {
 
 export const parseData = async(storeData, dispatch, setStatus, headers, dataType) => {
     setStatus("Parsing CSV Data")
-    const arr = Array.from({ length: Math.ceil((storeData["linesCount"] + 1) / 5000) }, (_, i) => i * 5000).concat(storeData["linesCount"] + 1);
+    const arr = Array.from({ length: Math.ceil((storeData["linesCount"] + 1) / 10000) }, (_, i) => i * 10000).concat(storeData["linesCount"] + 1);
     if (storeData.headers === true) {
         arr[0] = 1;
     }
-
     let totalTime = 0;
     let iterationsCompleted = 0;
-
-    // Update status periodically
-    let etaSeconds = 0; // Initial ETA seconds placeholder
+    let etaSeconds = 0;
     const updateInterval = setInterval(() => {
-        etaSeconds = Math.max(0, etaSeconds - 1); // Ensure ETA doesn't go below 0
+        etaSeconds = Math.max(0, etaSeconds - 1);
         setStatus(`Parsing CSV data ~ ${secondsToTime(etaSeconds)}`);
-    }, 1000); // Update every second
+    }, 1000);
 
     if (arr.length > 2) {
         for (let i = 0; i < arr.length - 1; i++) {
             const startTime = performance.now();
-    
             await window.electron.getData(storeData.filePath, headers, arr[i], arr[i + 1], dataType, 'init');
-    
             const endTime = performance.now();
-            const iterationTime = (endTime - startTime) / 1000; // Convert to seconds
-            totalTime += iterationTime; // Update total time
+            const iterationTime = (endTime - startTime) / 1000; 
+            totalTime += iterationTime; 
             iterationsCompleted++;
-    
-            // Recalculate ETA based on new average iteration time
             const avgIterationTime = totalTime / iterationsCompleted;
             etaSeconds = avgIterationTime * (arr.length - 1 - iterationsCompleted);
         }
     } else {
-        etaSeconds = 0; // No ETA for a single iteration
+        etaSeconds = 0; 
     }
 
-    clearInterval(updateInterval); // Stop the periodic update once parsing is complete
+    clearInterval(updateInterval); 
     setStatus("Parsing CSV Data Complete");
-
     dataType = checkForAbsolute(dataType, storeData.parseDataTypes);
     return dataType;
 }
