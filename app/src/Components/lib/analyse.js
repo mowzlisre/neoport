@@ -10,42 +10,56 @@ export function secondsToTime(seconds) {
     return `${minutesStr}m ${secondsStr}s`;
 }
 
-export const fetchData = async (storeData, setN, setColumns, dispatch, navigate, toast, setStatus) => {
+export const parseData = async(storeData, dispatch, setStatus, headers, dataType) => {
+    setStatus("Parsing CSV Data 0%")
+    const arr = Array.from({ length: Math.ceil((storeData["linesCount"] + 1) / 10000) }, (v, i) => i * 10000).concat(storeData["linesCount"] + 1);
+    if (storeData.headers === true) {
+        arr[0] = 1
+    }
+    if (arr.length > 2) {
+        for (let i = 0; i < arr.length - 1; i++) {
+            let d = await window.electron.getData(storeData.filePath, headers, arr[i], arr[i + 1], dataType, 'init')
+            if (i === 0) {
+                storeData["csvData"] = d.data.slice(0, 10)
+                dispatch(setStoreData(storeData));
+            }
+            dataType = d.dataType
+            setStatus(`Parsing CSV data (${(((i + 1) * 100) / arr.length - 1).toFixed(0)}%) ~ ${secondsToTime((arr.length - i) * 4)}`)
+        }
+    } else {
+        let d = await window.electron.getData(storeData.filePath, headers, arr[0], arr[1], dataType, 'init')
+        storeData["csvData"] = d.data.slice(0, 10)
+        dataType = d.dataType
+    }
+    dataType = checkForAbsolute(dataType, storeData.parseDataTypes)
+    return dataType
+}
+
+export const fetchData = async (storeData, setColumns, dispatch, navigate, toast, setStatus) => {
     try {
         setStatus("Reading file")
         let headers = []
         let dataType = {}
-        let parseType = storeData.parseDataTypes === true ? "init" : ''
         if (storeData.filePath !== null) {
             const n = await window.electron.getLines(storeData.filePath, storeData.headers)
-            setN(n)
+            storeData["linesCount"] = n;
             headers = await window.electron.getHeaders(storeData.filePath, storeData.headers)
             setColumns(headers);
-            const arr = Array.from({ length: Math.ceil((n + 1) / 30000) }, (v, i) => i * 30000).concat(n + 1);
-            if (storeData.headers === true) {
-                arr[0] = 1
-            }
             headers.map((item, index) => {
                 dataType[headers[index]] = {
-                    NULL: 0, LIST: 0, MAP: 0, BOOLEAN: 0, INTEGER: 0, FLOAT: 0, STRING: 0, ByteArray: 0,
+                    NULL: 0, LIST: 0, MAP: 0, BOOLEAN: 0, INTEGER: 0, FLOAT: 0, STRING: 0, ByteArray: 0
                 }
             })
-            if (arr.length > 2) {
-                for (let i = 0; i < arr.length - 1; i++) {
-                    let d = await window.electron.getData(storeData.filePath, headers, arr[i], arr[i + 1], dataType, parseType)
-                    if (i === 0) {
-                        storeData["csvData"] = d.data.slice(0, 10)
-                        dispatch(setStoreData(storeData));
-                    }
-                    dataType = d.dataType
-                    setStatus(`Reading CSV data (${(((i + 1) * 100) / arr.length - 1).toFixed(0)}%) ~ ${secondsToTime((arr.length - i) * 4)}`)
-                }
-            } else {
-                let d = await window.electron.getData(storeData.filePath, headers, arr[0], arr[1], dataType, parseType)
-                storeData["csvData"] = d.data.slice(0, 10)
-                dataType = d.dataType
+            storeData["dataTypes"] = dataType
+            let start = 0
+            if (storeData.headers === true) {
+                start = 1
             }
-            dataType = checkForAbsolute(dataType, storeData.parseDataTypes)
+            let d = await window.electron.getData(storeData.filePath, headers, start, start+10, dataType)
+            storeData["csvData"] = d.data.slice(0, 10)
+            if(storeData.parseDataTypes === true){
+                dataType = await parseData(storeData, dispatch, setStatus, headers, dataType)
+            }
             storeData["dataTypes"] = dataType;
             dispatch(setStoreData(storeData));
         } else {

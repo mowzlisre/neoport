@@ -1,6 +1,7 @@
 import { Box, Flex } from "@chakra-ui/react";
 
 const NTooltip = ({data}) => {
+    console.log(data)
     return (
         <Box>
             <div>

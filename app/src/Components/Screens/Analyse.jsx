@@ -17,7 +17,6 @@ function Analyse() {
     const toast = useToast();
     const [columns, setColumns] = useState([])
     const [status, setStatus] = useState('')
-    const [n, setN] = useState(0)
     const [dbStatus, setDbStatus] = useState('unknown')
     const [isModalOpen, setIsModalOpen] = useState(false);
     const openModal = () => setIsModalOpen(true);
@@ -30,7 +29,7 @@ function Analyse() {
     }
 
     useEffect(() => {
-        fetchData(storeData, setN, setColumns, dispatch, navigate, toast, setStatus)
+        fetchData(storeData, setColumns, dispatch, navigate, toast, setStatus)
         testConnection()
     }, [])
 
@@ -54,7 +53,7 @@ function Analyse() {
             <Divider />
             <PreviewTab {...{storeData, columns }} />
             <Divider />
-            <StatusBar {...{status, dbStatus, openModal, columns, n}} />
+            <StatusBar {...{storeData, status, dbStatus, openModal, columns}} />
             <SettingsModal isOpen={isModalOpen} onClose={closeModal} dbStatus={dbStatus} setDbStatus={setDbStatus} storeData={storeData} />
         </>
     );

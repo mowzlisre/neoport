@@ -1,7 +1,7 @@
 import { Box, Center, Divider, Flex, HStack, Spinner, Text } from "@chakra-ui/react"
 import { FcAcceptDatabase, FcDataEncryption, FcDeleteDatabase, FcEngineering } from "react-icons/fc"
 
-const StatusBar = ({status, dbStatus, openModal, columns, n}) => {
+const StatusBar = ({storeData, status, dbStatus, openModal, columns}) => {
     return (
         <Flex height={"4vh"} bg={"aliceblue"} justifyContent={"end"} px={10}>
             <Flex gap={3} my={'auto'}>
@@ -24,7 +24,7 @@ const StatusBar = ({status, dbStatus, openModal, columns, n}) => {
                     </Center>
                 </Flex>
                 <Flex gap={3}>
-                    <Text fontSize={'xs'} my={"auto"} >{n} Rows</Text>
+                    <Text fontSize={'xs'} my={"auto"} >{storeData["linesCount"]} Rows</Text>
                     <Center height='4vh' my={'auto'}>
                         <Divider orientation='vertical' bg={"aliceblue"} />
                     </Center>

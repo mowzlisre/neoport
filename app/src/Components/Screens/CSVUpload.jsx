@@ -30,7 +30,8 @@ const CSVUpload = () => {
         if (files.length > 0) {
             const file = files[0];
             if (file.type === 'text/csv' || /\.csv$/.test(file.name)) {
-                dispatch(setStoreData({ filePath: file.path, fileName: file.name, fileSize: file.size, headers: storeData["headers"] }));
+                dispatch(setStoreData({ filePath: file.path, fileName: file.name, fileSize: file.size, 
+                    headers: storeData["headers"], parseDataTypes: storeData["parseDataTypes"], linesCount: 0, dataTypes: storeData["dataTypes"] }));
             } else {
                 toast({
                     title: <Text fontSize={'sm'}>Unsupported File Type</Text>,
