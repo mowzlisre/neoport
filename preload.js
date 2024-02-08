@@ -35,6 +35,7 @@ contextBridge.exposeInMainWorld('electron', {
             let partialData = [];
     
             Papa.parse(file, {
+                dynamicTyping: true,
                 step: (result) => {
                     if (lineCount >= start && lineCount < end) {
                         if (headers.length === result.data.length) {
@@ -85,7 +86,7 @@ contextBridge.exposeInMainWorld('electron', {
                     }
                 });
         });
-    }
+    },
 });
 
 contextBridge.exposeInMainWorld('settings', {

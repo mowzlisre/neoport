@@ -131,7 +131,7 @@ const CSVUpload = () => {
                                 </Flex>
                                 <Flex textAlign={'start'} w={"100%"}>
                                     <Checkbox defaultChecked={storeData["parseDataTypes"]} onChange={handleParseChange} size={'sm'}>
-                                        <Text fontSize={'xs'}>Parse DataTypes (slower)</Text>
+                                        <Text fontSize={'xs'}>Parse DataTypes (Advanced)</Text>
                                     </Checkbox>
                                 </Flex>
                                 <Button size={'sm'} onClick={handleAnalyse}>Analyse</Button>

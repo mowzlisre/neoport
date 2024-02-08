@@ -30,6 +30,7 @@ function Analyse() {
 
     useEffect(() => {
         fetchData(storeData, setColumns, dispatch, navigate, toast, setStatus)
+
         testConnection()
     }, [])
 

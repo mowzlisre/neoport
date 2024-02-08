@@ -6,34 +6,54 @@ export function secondsToTime(seconds) {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
     const minutesStr = minutes < 10 ? `0${minutes}` : minutes.toString();
-    const secondsStr = remainingSeconds < 10 ? `0${remainingSeconds}` : remainingSeconds.toString();
+    const secondsStr = remainingSeconds < 9 ? `0${remainingSeconds.toFixed(0)}` : remainingSeconds.toFixed(0);
     return `${minutesStr}m ${secondsStr}s`;
 }
 
 export const parseData = async(storeData, dispatch, setStatus, headers, dataType) => {
-    setStatus("Parsing CSV Data 0%")
-    const arr = Array.from({ length: Math.ceil((storeData["linesCount"] + 1) / 10000) }, (v, i) => i * 10000).concat(storeData["linesCount"] + 1);
+    setStatus("Parsing CSV Data")
+    const arr = Array.from({ length: Math.ceil((storeData["linesCount"] + 1) / 5000) }, (_, i) => i * 5000).concat(storeData["linesCount"] + 1);
     if (storeData.headers === true) {
-        arr[0] = 1
+        arr[0] = 1;
     }
+
+    let totalTime = 0;
+    let iterationsCompleted = 0;
+
+    // Update status periodically
+    let etaSeconds = 0; // Initial ETA seconds placeholder
+    const updateInterval = setInterval(() => {
+        etaSeconds = Math.max(0, etaSeconds - 1); // Ensure ETA doesn't go below 0
+        setStatus(`Parsing CSV data ~ ${secondsToTime(etaSeconds)}`);
+    }, 1000); // Update every second
+
     if (arr.length > 2) {
         for (let i = 0; i < arr.length - 1; i++) {
-            let d = await window.electron.getData(storeData.filePath, headers, arr[i], arr[i + 1], dataType, 'init')
-            if (i === 0) {
-                storeData["csvData"] = d.data.slice(0, 10)
-                dispatch(setStoreData(storeData));
-            }
-            dataType = d.dataType
-            setStatus(`Parsing CSV data (${(((i + 1) * 100) / arr.length - 1).toFixed(0)}%) ~ ${secondsToTime((arr.length - i) * 4)}`)
+            const startTime = performance.now();
+    
+            await window.electron.getData(storeData.filePath, headers, arr[i], arr[i + 1], dataType, 'init');
+    
+            const endTime = performance.now();
+            const iterationTime = (endTime - startTime) / 1000; // Convert to seconds
+            totalTime += iterationTime; // Update total time
+            iterationsCompleted++;
+    
+            // Recalculate ETA based on new average iteration time
+            const avgIterationTime = totalTime / iterationsCompleted;
+            etaSeconds = avgIterationTime * (arr.length - 1 - iterationsCompleted);
         }
     } else {
-        let d = await window.electron.getData(storeData.filePath, headers, arr[0], arr[1], dataType, 'init')
-        storeData["csvData"] = d.data.slice(0, 10)
-        dataType = d.dataType
+        etaSeconds = 0; // No ETA for a single iteration
     }
-    dataType = checkForAbsolute(dataType, storeData.parseDataTypes)
-    return dataType
+
+    clearInterval(updateInterval); // Stop the periodic update once parsing is complete
+    setStatus("Parsing CSV Data Complete");
+
+    dataType = checkForAbsolute(dataType, storeData.parseDataTypes);
+    return dataType;
 }
+
+
 
 export const fetchData = async (storeData, setColumns, dispatch, navigate, toast, setStatus) => {
     try {

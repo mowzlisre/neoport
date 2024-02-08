@@ -27,7 +27,7 @@ const PreviewTab = ({ storeData, columns }) => {
                                     <Th></Th>
                                     {columns.length !== 0 && storeData.dataTypes &&
                                         columns.map((item, columnIndex) => (
-                                            <Th py={3} role="button" minWidth={170} key={columnIndex} bg={storeData.dataTypes?.[item]?.abs !== true ? "aliceblue" : "white"}>
+                                            <Th py={3} role="button" minWidth={170} key={columnIndex} bg={storeData.parseDataTypes === true ? storeData.dataTypes?.[item]?.abs !== true ? "aliceblue" : "white" : "white"}>
                                                 <Tooltip
                                                     hasArrow
                                                     label={<NTooltip data={storeData.dataTypes[item]} />}
@@ -35,7 +35,7 @@ const PreviewTab = ({ storeData, columns }) => {
                                                     p={3}
                                                     fontSize={'xs'}
                                                     borderRadius={5}
-                                                    isDisabled={storeData.dataTypes[item].abs}
+                                                    isDisabled={storeData.parseDataTypes === true ? storeData.dataTypes[item].abs : true}
                                                 >
                                                     <div>
                                                         <Text fontSize={13}>{item}</Text>
@@ -45,9 +45,10 @@ const PreviewTab = ({ storeData, columns }) => {
                                                                 size={'xs'}
                                                                 my={1}
                                                                 rounded={5}
-                                                                value={storeData.dataTypes[item].maxDataType}
+                                                                value={storeData.dataTypes[item].maxDataType || 'UNCHANGED'}
                                                                 onChange={handleColumnTypeChange}
                                                             >
+                                                                <option value='UNCHANGED'>UNCHANGED</option>
                                                                 <option value='STRING'>STRING</option>
                                                                 <option value='NULL'>NULL</option>
                                                                 <option value='LIST'>LIST</option>
@@ -57,7 +58,7 @@ const PreviewTab = ({ storeData, columns }) => {
                                                                 <option value='FLOAT'>FLOAT</option>
                                                                 <option value='ByteArray'>ByteArray</option>
                                                             </Select>
-                                                            {storeData.dataTypes[item].abs !== true && <Box my={'auto'}><MdInfo fontSize={16} /></Box>}
+                                                            {storeData.parseDataTypes === true && storeData.dataTypes[item].abs !== true && <Box my={'auto'}><MdInfo fontSize={16} /></Box>}
                                                         </Flex>
                                                     </div>
                                                 </Tooltip>
@@ -77,7 +78,7 @@ const PreviewTab = ({ storeData, columns }) => {
                                                 <Td
                                                     key={index_}
                                                     fontSize={'xs'}
-                                                    bg={storeData.dataTypes[columns[index_]]?.abs !== true ? "aliceblue" : "white"}
+                                                    bg={storeData.parseDataTypes === true ? storeData.dataTypes[columns[index_]]?.abs !== true ? "aliceblue" : "white" : "white"}
                                                 >
 
                                                     {item_ === true ? (
