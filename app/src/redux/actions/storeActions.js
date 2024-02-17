@@ -8,3 +8,8 @@ export const setHeaders = (headers) => ({
   type: "SET_HEADERS",
   payload: headers,
 });
+
+export const setStatusAction = (status) => ({
+  type: "SET_STATUS",
+  payload: status
+})

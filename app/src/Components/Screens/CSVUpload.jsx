@@ -13,7 +13,7 @@ import { TiTimes } from "react-icons/ti";
 import logo from "../../logo.png";
 import { useDispatch, useSelector } from 'react-redux';
 import { TbCsv } from "react-icons/tb";
-import { setStoreData } from '../../redux/actions/storeActions';
+import { setStatusAction, setStoreData } from '../../redux/actions/storeActions';
 import { useNavigate } from 'react-router-dom';
 import { formatFileSize } from '../lib/conf';
 

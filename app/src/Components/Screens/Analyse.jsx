@@ -10,13 +10,14 @@ import { fetchData } from "../lib/analyse";
 import HeaderTab from "../Container/HeaderTab";
 import EntityTab from "../Container/EntityTab";
 import EntitySandBox from "../Container/EntitySandBox";
+
 function Analyse() {
     const storeData = useSelector((state) => state.storeData)
+    const status = useSelector((state) => state.status)
     const navigate = useNavigate();
     const dispatch = useDispatch();
     const toast = useToast();
     const [columns, setColumns] = useState([])
-    const [status, setStatus] = useState('')
     const [dbStatus, setDbStatus] = useState('unknown')
     const [isModalOpen, setIsModalOpen] = useState(false);
     const openModal = () => setIsModalOpen(true);
@@ -24,13 +25,12 @@ function Analyse() {
     const [current, setCurrent] = useState({})
 
     const testConnection = async () => {
-        const status = await window.settings.testConnection();
-        setDbStatus(status)
+        const state = await window.settings.testConnection();
+        setDbStatus(state)
     }
 
     useEffect(() => {
-        fetchData(storeData, setColumns, dispatch, navigate, toast, setStatus)
-
+        fetchData(storeData, setColumns, dispatch, navigate, toast)
         testConnection()
     }, [])
 
@@ -54,7 +54,7 @@ function Analyse() {
             <Divider />
             <PreviewTab {...{storeData, columns }} />
             <Divider />
-            <StatusBar {...{storeData, status, dbStatus, openModal, columns}} />
+            <StatusBar {...{storeData, dbStatus, openModal, columns, status}} />
             <SettingsModal isOpen={isModalOpen} onClose={closeModal} dbStatus={dbStatus} setDbStatus={setDbStatus} storeData={storeData} />
         </>
     );

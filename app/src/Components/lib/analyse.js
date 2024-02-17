@@ -1,5 +1,7 @@
+import { dispatchStatus } from "./functions";
+
 const { Text } = require("@chakra-ui/react");
-const { setStoreData } = require("../../redux/actions/storeActions");
+const { setStoreData, setStatusAction } = require("../../redux/actions/storeActions");
 const { checkForAbsolute } = require("./conf");
 
 export function secondsToTime(seconds) {
@@ -10,9 +12,9 @@ export function secondsToTime(seconds) {
     return `${minutesStr}m ${secondsStr}s`;
 }
 
-export const parseData = async(storeData, dispatch, setStatus, headers, dataType) => {
-    setStatus("Parsing CSV Data")
-    const arr = Array.from({ length: Math.ceil((storeData["linesCount"] + 1) / 10000) }, (_, i) => i * 10000).concat(storeData["linesCount"] + 1);
+export const parseData = async(storeData, dispatch, headers, dataType) => {
+    dispatchStatus(dispatch, "Parsing CSV Data")
+    const arr = Array.from({ length: Math.ceil((storeData["linesCount"] + 1) / 30000) }, (_, i) => i * 30000).concat(storeData["linesCount"] + 1);
     if (storeData.headers === true) {
         arr[0] = 1;
     }
@@ -21,13 +23,18 @@ export const parseData = async(storeData, dispatch, setStatus, headers, dataType
     let etaSeconds = 0;
     const updateInterval = setInterval(() => {
         etaSeconds = Math.max(0, etaSeconds - 1);
-        setStatus(`Parsing CSV data ~ ${secondsToTime(etaSeconds)}`);
+        if(etaSeconds === 0) {
+            dispatchStatus(dispatch, 'Parsing CSV data')
+        } else{
+            dispatchStatus(dispatch, `Parsing CSV data ~ ${secondsToTime(etaSeconds)}`)
+        }
     }, 1000);
 
     if (arr.length > 2) {
         for (let i = 0; i < arr.length - 1; i++) {
             const startTime = performance.now();
-            await window.electron.getData(storeData.filePath, headers, arr[i], arr[i + 1], dataType, 'init');
+            let d = await window.electron.getData(storeData.filePath, headers, arr[i], arr[i + 1], dataType, 'init');
+            dataType = d.dataType
             const endTime = performance.now();
             const iterationTime = (endTime - startTime) / 1000; 
             totalTime += iterationTime; 
@@ -36,20 +43,20 @@ export const parseData = async(storeData, dispatch, setStatus, headers, dataType
             etaSeconds = avgIterationTime * (arr.length - 1 - iterationsCompleted);
         }
     } else {
+        let d = await window.electron.getData(storeData.filePath, headers, arr[0], arr[1], dataType, 'init');
+        dataType = d.dataType
         etaSeconds = 0; 
     }
 
     clearInterval(updateInterval); 
-    setStatus("Parsing CSV Data Complete");
+    dispatchStatus(dispatch, "Parsing CSV Data Complete");
     dataType = checkForAbsolute(dataType, storeData.parseDataTypes);
     return dataType;
 }
 
-
-
-export const fetchData = async (storeData, setColumns, dispatch, navigate, toast, setStatus) => {
+export const fetchData = async (storeData, setColumns, dispatch, navigate, toast) => {
     try {
-        setStatus("Reading file")
+        dispatchStatus(dispatch, "Reading File")
         let headers = []
         let dataType = {}
         if (storeData.filePath !== null) {
@@ -70,7 +77,7 @@ export const fetchData = async (storeData, setColumns, dispatch, navigate, toast
             let d = await window.electron.getData(storeData.filePath, headers, start, start+10, dataType)
             storeData["csvData"] = d.data.slice(0, 10)
             if(storeData.parseDataTypes === true){
-                dataType = await parseData(storeData, dispatch, setStatus, headers, dataType)
+                dataType = await parseData(storeData, dispatch,  headers, dataType)
             }
             storeData["dataTypes"] = dataType;
             dispatch(setStoreData(storeData));
@@ -81,7 +88,7 @@ export const fetchData = async (storeData, setColumns, dispatch, navigate, toast
             navigate('/upload');
             return;
         }
-        setStatus("")
+        dispatchStatus(dispatch, "")
 
 
     } catch (error) {

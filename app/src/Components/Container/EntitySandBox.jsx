@@ -1,7 +1,7 @@
 import { Box, Button, Divider, Flex, Input, InputGroup, InputLeftAddon, Radio, RadioGroup, Select, Text } from "@chakra-ui/react";
-import { useEffect } from "react";
 import { setStoreData } from "../../redux/actions/storeActions";
-
+import { useEffect } from "react";
+import { validateProperties } from "../lib/conf";
 const EntitySandBox = ({ storeData, current, setCurrent, columns }) => {
     const handleEntityNameChange = (e) => {
         const value = e.target.value;
@@ -25,7 +25,7 @@ const EntitySandBox = ({ storeData, current, setCurrent, columns }) => {
 
     const isDuplicate = (value) => {
         if(value !== ''){
-            const count = Object.values(current.parameters).filter((param) => param.key === value).length;
+            const count = Object.values(current.attributes).filter((param) => param.key === value).length;
             return count > 1;
         } else{
             return true
@@ -46,68 +46,77 @@ const EntitySandBox = ({ storeData, current, setCurrent, columns }) => {
         }));
     };
 
-    const handleParameterKeyChange = (key, newValue) => {
+    const handleAttributeKeyChange = (key, newValue) => {
         const validKeyPattern = /^[a-zA-Z0-9_]+$/;
     
         if (newValue === '' || validKeyPattern.test(newValue)) {
             setCurrent((prevCurrent) => {
-                const updatedParameters = {
-                    ...prevCurrent.parameters,
-                    [key]: { ...prevCurrent.parameters[key], key: newValue },
+                const updatedAttributes = {
+                    ...prevCurrent.attributes,
+                    [key]: { ...prevCurrent.attributes[key], key: newValue },
                 };
                 return {
                     ...prevCurrent,
-                    parameters: updatedParameters,
+                    attributes: updatedAttributes,
                 };
             });
         }
     };
     
     
-    const handleParameterValueChange = (key, newValue) => {
+    const handleAttributeValueChange = (key, newValue) => {
         setCurrent((prevCurrent) => {
-            const updatedParameters = {
-                ...prevCurrent.parameters,
-                [key]: { ...prevCurrent.parameters[key], value: newValue },
+            const updatedAttributes = {
+                ...prevCurrent.attributes,
+                [key]: { ...prevCurrent.attributes[key], value: newValue },
             };
             return {
                 ...prevCurrent,
-                parameters: updatedParameters,
+                attributes: updatedAttributes,
             };
         });
     };
     
     
-    const addParameter = () => {
+    const addAttribute = () => {
         setCurrent((prevCurrent) => {
-            const newParameters = {
-                ...prevCurrent.parameters,
-                [Object.keys(prevCurrent.parameters).length]: { key: "", value: "" },
+            const newAttributes = {
+                ...prevCurrent.attributes,
+                [Object.keys(prevCurrent.attributes).length]: { key: "", value: "" },
             };
             return {
                 ...prevCurrent,
-                parameters: newParameters,
+                attributes: newAttributes,
             };
         });
     };
+
+    useEffect(() => {
+        validateProperties(current)
+    }, [current])
+
+    const cancelSandBoxEvent = () => {
+        setCurrent({})
+    }
+    
 
     const saveEntity = () => {
         const isNameValid = current.name && current.name.trim() !== '';
     
-        const allParametersValid = Object.values(current.parameters).every(param => param.value.trim() !== '');
+        const allAttributesValid = Object.values(current.attributes).every(param => param.value.trim() !== '');
 
-        const allKeysValid = Object.values(current.parameters).every(param => param.value.trim() !== '');
+        const allKeysValid = Object.values(current.attributes).every(param => param.key.trim() !== '');
     
-        if (!isNameValid || !allParametersValid || !allKeysValid) {
+        if (!isNameValid || !allAttributesValid || !allKeysValid) {
             let errorMessage = '';
             if (!isNameValid) {
-                errorMessage += 'Entity Name cannot be empty. ';
+                errorMessage = 'Entity Name cannot be empty. ';
+            }
+            if (!allAttributesValid) {
+                errorMessage = 'Some attributes are not mapped. Please verify';
             }
             if (!allKeysValid){                
-                errorMessage += 'Attributes name cannot be empty';
-            }
-            if (!allParametersValid) {
-                errorMessage += 'Some attributes are not mapped. Please verify';
+                errorMessage = 'Attributes name cannot be empty';
             }
             alert(errorMessage);
             return; 
@@ -134,7 +143,6 @@ const EntitySandBox = ({ storeData, current, setCurrent, columns }) => {
     
         setCurrent({});
     };
-    
     
 
     return (
@@ -163,52 +171,70 @@ const EntitySandBox = ({ storeData, current, setCurrent, columns }) => {
                                 <Divider />
                                 <Box p={7} height={"38vh"} overflow={"auto"}>
                                     <Text fontSize={"sm"} fontWeight={"bold"} mb={3}>
-                                        Parameters
+                                        Attributes
                                     </Text>
-                                    <RadioGroup onChange={handleSetNodeIndex} value={current.index}>
-                                        {
-                                            Object.entries(current.parameters).map(([key, param]) => (
-                                                <Flex key={key}>
-                                                    <Radio width={"7%"} value={param.key} isDisabled={isDuplicate(param.key)} />
-                                                    <Input
-                                                        _focus={{ boxShadow: "none", outline: "none" }}
-                                                        borderRadius={0}
-                                                        px={3}
-                                                        width={"30%"}
-                                                        size={"sm"}
-                                                        value={param.key}
-                                                        placeholder='params'
-                                                        onChange={(e) => handleParameterKeyChange(key, e.target.value)}
-                                                    />
-                                                    <Select
-                                                        _focus={{ boxShadow: "none", outline: "none" }}
-                                                        borderRadius={0}
-                                                        px={3}
-                                                        width={"63%"}
-                                                        size={"sm"}
-                                                        value={param.value}
-                                                        onChange={(e) => handleParameterValueChange(key, e.target.value)}
-                                                    >
-                                                        <option disabled value="">--- Select a field ---</option>
-                                                        {columns.map((column, index) => (
-                                                            <option key={index} value={column}>
-                                                                {column}
-                                                            </option>
-                                                        ))}
-                                                    </Select>
-
-                                                </Flex>
-                                            ))
-                                        }
-                                    </RadioGroup>
+                                    {
+                                        Object.entries(current.attributes).length !== 0 ?
+                                        <RadioGroup onChange={handleSetNodeIndex} value={current.index}>
+                                            {
+                                                Object.entries(current.attributes).map(([key, param]) => (
+                                                    <Flex key={key}>
+                                                        <Radio width={"7%"} value={param.key} isDisabled={isDuplicate(param.key)} />
+                                                        <Input
+                                                            _focus={{ boxShadow: "none", outline: "none" }}
+                                                            borderRadius={0}
+                                                            px={3}
+                                                            width={"30%"}
+                                                            size={"sm"}
+                                                            value={param.key}
+                                                            placeholder='params'
+                                                            onChange={(e) => handleAttributeKeyChange(key, e.target.value)}
+                                                        />
+                                                        <Select
+                                                            _focus={{ boxShadow: "none", outline: "none" }}
+                                                            borderRadius={0}
+                                                            px={3}
+                                                            width={"63%"}
+                                                            size={"sm"}
+                                                            value={param.value}
+                                                            onChange={(e) => handleAttributeValueChange(key, e.target.value)}
+                                                            color={"gray"}
+                                                        >
+                                                            <option disabled value="">--- Select a field ---</option>
+                                                            {columns.map((column, index) => (
+                                                                <option key={index} value={column}>
+                                                                    {column}
+                                                                </option>
+                                                            ))}
+                                                        </Select>
+    
+                                                    </Flex>
+                                                ))
+                                            }
+                                        </RadioGroup>
+                                        : <Flex p={2} justifyContent={'center'}>
+                                            <Text fontSize={'2xs'}>Click <b>Add Attribute</b> to add new attributes </Text>
+                                        </Flex>
+                                    }
 
                                 </Box>
                             </Flex>
                             <Divider />
-                            <Flex justifyContent={"end"} p={2}>
+                            <Flex justifyContent={"space-between"} p={2}>
+                                <Flex p={2}>
+                                    <Button size={"sm"} variant={"ghost"} onClick={cancelSandBoxEvent}>
+                                        <Text fontSize={"xs"}>Cancel</Text>
+                                    </Button>
+                                    {
+                                        validateProperties(current) === true &&
+                                            <Button size={"sm"} colorScheme="yellow" variant={"ghost"}>
+                                                <Text fontSize={"xs"}>Potential issues Found!</Text>
+                                            </Button>
+                                    }
+                                </Flex>
                                 <Flex justifyContent={"end"} p={2} gap={3}>
-                                    <Button size={"sm"} variant={"ghost"} onClick={addParameter}>
-                                        <Text fontSize={"xs"}>Add Parameter</Text>
+                                    <Button size={"sm"} variant={"ghost"} onClick={addAttribute}>
+                                        <Text fontSize={"xs"}>Add Attribute</Text>
                                     </Button>
                                     <Button size={"sm"} variant={"ghost"} onClick={saveEntity}>
                                         Save
@@ -271,11 +297,11 @@ const EntitySandBox = ({ storeData, current, setCurrent, columns }) => {
                                 <Divider />
                                 <Box p={7} height={"34vh"} overflow={"auto"}>
                                     <Text fontSize={"sm"} fontWeight={"bold"} mb={3}>
-                                        Parameters
+                                        Attributes
                                     </Text>
                                     <RadioGroup onChange={handleSetNodeIndex} value={current.index}>
                                     {
-                                        Object.entries(current.parameters).map(([key, param]) => (
+                                        Object.entries(current.attributes).map(([key, param]) => (
                                             <Flex key={key}>
                                                 <Radio width={"7%"} value={param.key} isDisabled={isDuplicate(param.key)} />
                                                 <Input
@@ -286,7 +312,7 @@ const EntitySandBox = ({ storeData, current, setCurrent, columns }) => {
                                                     size={"sm"}
                                                     value={param.key}
                                                     placeholder='params'
-                                                    onChange={(e) => handleParameterKeyChange(key, e.target.value)}
+                                                    onChange={(e) => handleAttributeKeyChange(key, e.target.value)}
                                                 />
                                                 <Select
                                                     _focus={{ boxShadow: "none", outline: "none" }}
@@ -295,7 +321,7 @@ const EntitySandBox = ({ storeData, current, setCurrent, columns }) => {
                                                     width={"63%"}
                                                     size={"sm"}
                                                     value={param.value}
-                                                    onChange={(e) => handleParameterValueChange(key, e.target.value)}
+                                                    onChange={(e) => handleAttributeValueChange(key, e.target.value)}
                                                 >
                                                     <option disabled value="">--- Select a field ---</option>
                                                     {columns.map((column, index) => (
@@ -313,8 +339,8 @@ const EntitySandBox = ({ storeData, current, setCurrent, columns }) => {
                             </Flex>
                             <Divider />
                             <Flex justifyContent={"end"} p={2} gap={3}>
-                                <Button size={"sm"} variant={"ghost"} onClick={addParameter}>
-                                    <Text fontSize={"xs"}>Add Parameter</Text>
+                                <Button size={"sm"} variant={"ghost"} onClick={addAttribute}>
+                                    <Text fontSize={"xs"}>Add Attribute</Text>
                                 </Button>
                                 <Button size={"sm"} variant={"ghost"} onClick={saveEntity}>
                                     Save

@@ -47,3 +47,27 @@ export const defaultConf = {
       password:"12345678"
   }
 }
+
+export const validateProperties = (current) => {
+  let flag = false;
+  if(current.attributes && Object.keys(current.attributes).length !== 0){
+      if (current.issues && Object.values(current.issues).some(value => value === true)) {
+          flag = true;
+      }
+      if(!Object.values(current.attributes).every(param => param.key && param.key.trim() !== '')){
+          flag = true;
+      }
+      if(!Object.values(current.attributes).every(param => param.value && param.value.trim() !== '')){
+          flag = true;
+      }
+  } else {
+      flag = false;
+  }
+  if (current.name === null || current.name === ''){
+      flag = true; 
+  }
+  if (current.index === null || current.index === ''){
+      flag = true; 
+  }
+  return flag;
+}

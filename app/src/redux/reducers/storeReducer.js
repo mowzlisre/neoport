@@ -12,6 +12,9 @@ const initialState = {
   // Add any other state properties you need
 };
 
+const initialStatus = {
+  status: ''
+}
 
 const storeReducer = (state = initialState, action) => {
   switch (action.type) {
@@ -29,5 +32,17 @@ const storeReducer = (state = initialState, action) => {
       return state;
   }
 };
-export default storeReducer;
 
+const statusReducer = (state = initialStatus, action) => {
+  switch(action.type) {
+    case "SET_STATUS":
+      return {
+      ...state,
+      status: action.payload.status
+    }
+    default:
+      return state
+  }
+}
+
+module.exports = {storeReducer, statusReducer}

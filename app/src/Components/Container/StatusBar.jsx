@@ -1,16 +1,16 @@
 import { Box, Center, Divider, Flex, HStack, Spinner, Text } from "@chakra-ui/react"
 import { FcAcceptDatabase, FcDataEncryption, FcDeleteDatabase, FcEngineering } from "react-icons/fc"
 
-const StatusBar = ({storeData, status, dbStatus, openModal, columns}) => {
+const StatusBar = ({storeData, dbStatus, openModal, columns, status}) => {
     return (
         <Flex height={"4vh"} bg={"aliceblue"} justifyContent={"end"} px={10}>
             <Flex gap={3} my={'auto'}>
                 {
-                    status !== '' &&
+                    status.status !== '' &&
                     <Flex gap={2}>
                         <HStack>
                             <Spinner size={"xs"} emptyColor='gray.200' color='blue.500' />
-                            <Text fontSize={'xs'} my={"auto"} >{status}</Text>
+                            <Text fontSize={'xs'} my={"auto"} >{status.status}</Text>
                         </HStack>
                         <Center height='4vh' my={'auto'}>
                             <Divider orientation='vertical' bg={"aliceblue"} />

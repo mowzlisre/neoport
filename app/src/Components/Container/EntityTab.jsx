@@ -1,21 +1,31 @@
-import { Avatar, Box, Button, Flex, Tag, Text } from "@chakra-ui/react"
+import { Avatar, AvatarBadge, Box, Button, Flex, Tag, Text } from "@chakra-ui/react"
 import { useState } from "react";
 import { FaPlus } from "react-icons/fa6";
+import { validateProperties } from "../lib/conf";
 
 const EntityTab = ({storeData, current, setCurrent}) => {
     const handleAddNewNode = () => {
         setCurrent({
-            parameters: {},
+            attributes: {},
             type: "node",
-            index: ""
+            index: "",
+            issues: {
+                duplicateImport: false
+            },
+            name: null
         })
     }
 
     const handleAddNewRelationship = () => {
         setCurrent({
-            parameters: {},
+            attributes: {},
             type: "relationships",
-            index: ""
+            index: "",
+            issues: {
+                duplicateImport: false,
+                isPseudo: false
+            },
+            name: null
         })
     }
 
@@ -41,7 +51,12 @@ const EntityTab = ({storeData, current, setCurrent}) => {
                                         dat["name"] = item
                                         setCurrent(dat)
                                     }}>
-                                    <Avatar name={item} />
+                                    <Avatar name={item}>
+                                        {
+                                            validateProperties(storeData.nodes[item]) === true &&
+                                            <AvatarBadge borderColor='papayawhip' bg='tomato' boxSize='1em' />
+                                        }
+                                    </Avatar>
                                 </Box>
                             ))
                         }
