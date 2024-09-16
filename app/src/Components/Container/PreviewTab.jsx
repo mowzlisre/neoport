@@ -19,8 +19,8 @@ const PreviewTab = ({ storeData, columns }) => {
 
         <Flex height={"35.5vh"} bg={"hite"} p={3} pb={0}>
             {
-                storeData["csvData"].length > 0 && storeData.dataTypes ?
-                    <TableContainer overflowY={'auto'}>
+                storeData.filePath !== null ? storeData["csvData"].length > 0 && storeData.dataTypes ?
+                    <TableContainer overflowY={'auto'} width={"100%"}>
                         <Table variant='striped' size={'sm'} className="scrollbar">
                             <Thead>
                                 <Tr>
@@ -45,7 +45,7 @@ const PreviewTab = ({ storeData, columns }) => {
                                                                 size={'xs'}
                                                                 my={1}
                                                                 rounded={5}
-                                                                value={storeData.dataTypes[item].maxDataType || 'UNCHANGED'}
+                                                                value={storeData.dataTypes[item]?.maxDataType || 'UNCHANGED'}
                                                                 onChange={handleColumnTypeChange}
                                                             >
                                                                 <option value='UNCHANGED'>UNCHANGED</option>
@@ -111,6 +111,10 @@ const PreviewTab = ({ storeData, columns }) => {
                         <Spinner size={'md'} thickness="4px" emptyColor='gray.200' color='blue.500' />
                         <Text my={"auto"} fontSize={'sm'}>Loading Data</Text>
                     </Flex>
+                : 
+                <Flex borderRadius={5} bg={"white"} w={"100%"} p={5} gap={4} justifyContent={'center'}>
+                    <Text my={"auto"} fontSize={'sm'}>Add Data Source</Text>
+                </Flex>
 
             }
 

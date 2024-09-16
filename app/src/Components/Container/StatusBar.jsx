@@ -1,7 +1,8 @@
 import { Box, Center, Divider, Flex, HStack, Spinner, Text } from "@chakra-ui/react"
 import { FcAcceptDatabase, FcDataEncryption, FcDeleteDatabase, FcEngineering } from "react-icons/fc"
+import SettingsModal from "../Settings/SettingsModal"
 
-const StatusBar = ({storeData, dbStatus, openModal, columns, status}) => {
+const StatusBar = ({storeData, dbStatus, setDbStatus, openSetModal, columns, status}) => {
     return (
         <Flex height={"4vh"} bg={"aliceblue"} justifyContent={"end"} px={10}>
             <Flex gap={3} my={'auto'}>
@@ -60,7 +61,7 @@ const StatusBar = ({storeData, dbStatus, openModal, columns, status}) => {
                         </Flex>
                 }
                 <Box my={"auto"} role="button">
-                    <FcEngineering onClick={openModal} />
+                    <FcEngineering onClick={() => openSetModal(<SettingsModal dbStatus={dbStatus} setDbStatus={setDbStatus} storeData={storeData} />)} />
                 </Box>
             </Flex>
         </Flex>

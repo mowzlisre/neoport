@@ -71,3 +71,6 @@ export const validateProperties = (current) => {
   }
   return flag;
 }
+
+export const primaryColor = "#6495ED"
+export const primaryColorBg = "#6495ED22"

@@ -11,10 +11,9 @@ function Welcome(){
         setIsLoading(true);
         const timeoutId = setTimeout(() => {
             setIsLoading(false);
-            navigate('/upload');
+            navigate('/prompt');
         }, 1000);
     
-        // Cleanup timeout if the component unmounts
         return () => clearTimeout(timeoutId);
     }
     return <>

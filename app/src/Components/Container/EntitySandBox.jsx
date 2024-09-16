@@ -1,8 +1,11 @@
-import { Box, Button, Divider, Flex, Input, InputGroup, InputLeftAddon, Radio, RadioGroup, Select, Text } from "@chakra-ui/react";
+import { Box, Button, Checkbox, CheckboxGroup, Divider, Flex, Input, InputGroup, InputLeftAddon, Radio, RadioGroup, Select, Text, useToast } from "@chakra-ui/react";
 import { setStoreData } from "../../redux/actions/storeActions";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { validateProperties } from "../lib/conf";
-const EntitySandBox = ({ storeData, current, setCurrent, columns }) => {
+const EntitySandBox = ({ storeData, current, setCurrent, columns, openSetModal }) => {
+    const toast = useToast()
+    const [indexedAttributes, setIndexedAttributes] = useState([]);
+
     const handleEntityNameChange = (e) => {
         const value = e.target.value;
         const validNamePattern = /^[a-zA-Z0-9_]+$/;
@@ -14,14 +17,15 @@ const EntitySandBox = ({ storeData, current, setCurrent, columns }) => {
             }));
         }
     };
-    
-    
-    const handleSetNodeIndex = (val) => {
+
+    const handleSetNodeIndex = (value) => {
+
+        setIndexedAttributes(value);
         setCurrent((prevCurrent) => ({
             ...prevCurrent,
-            index: val
-        }));
-    }
+            index: value.map(str => parseInt(str, 10))
+        }))
+    };
 
     const isDuplicate = (value) => {
         if(value !== ''){
@@ -63,7 +67,6 @@ const EntitySandBox = ({ storeData, current, setCurrent, columns }) => {
         }
     };
     
-    
     const handleAttributeValueChange = (key, newValue) => {
         setCurrent((prevCurrent) => {
             const updatedAttributes = {
@@ -76,8 +79,7 @@ const EntitySandBox = ({ storeData, current, setCurrent, columns }) => {
             };
         });
     };
-    
-    
+     
     const addAttribute = () => {
         setCurrent((prevCurrent) => {
             const newAttributes = {
@@ -92,34 +94,82 @@ const EntitySandBox = ({ storeData, current, setCurrent, columns }) => {
     };
 
     useEffect(() => {
-        validateProperties(current)
+        validateProperties(current, setCurrent)
     }, [current])
 
     const cancelSandBoxEvent = () => {
         setCurrent({})
     }
-    
+
 
     const saveEntity = () => {
         const isNameValid = current.name && current.name.trim() !== '';
-    
         const allAttributesValid = Object.values(current.attributes).every(param => param.value.trim() !== '');
-
         const allKeysValid = Object.values(current.attributes).every(param => param.key.trim() !== '');
     
         if (!isNameValid || !allAttributesValid || !allKeysValid) {
-            let errorMessage = '';
             if (!isNameValid) {
-                errorMessage = 'Entity Name cannot be empty. ';
+                toast({
+                    title: <Text fontSize={'sm'}>Entity Name cannot be empty</Text>, status: "warning", duration: 3000, variant: "subtle"
+                });
+            }
+            if (!allKeysValid) {
+                toast({
+                    title: <Text fontSize={'sm'}>Attributes name cannot be empty</Text>, status: "warning", duration: 3000, variant: "subtle"
+                });
             }
             if (!allAttributesValid) {
-                errorMessage = 'Some attributes are not mapped. Please verify';
+                toast({
+                    title: <Text fontSize={'sm'}>Unmapped attributes detected</Text>, status: "warning", duration: 3000, variant: "subtle"
+                });
             }
-            if (!allKeysValid){                
-                errorMessage = 'Attributes name cannot be empty';
+            return;
+        }
+    
+        // Check for duplicate keys and values
+        const attributeKeys = Object.values(current.attributes).map(param => param.key.trim());
+        const attributeValues = Object.values(current.attributes).map(param => param.value.trim());
+    
+        const hasDuplicateKeys = new Set(attributeKeys).size !== attributeKeys.length;
+        const hasDuplicateValues = new Set(attributeValues).size !== attributeValues.length;
+    
+        if (hasDuplicateKeys && hasDuplicateValues) {
+            toast({
+                title: <Text fontSize={'sm'}>Duplicate keys and values are not allowed</Text>, status: "warning", duration: 3000, variant: "subtle"
+            });
+            return;
+        } else if (hasDuplicateKeys) {
+            toast({
+                title: <Text fontSize={'sm'}>One or more attributes have the same name</Text>, status: "warning", duration: 3000, variant: "subtle"
+            });
+            return;
+        } else if (hasDuplicateValues) {
+            toast({
+                title: <Text fontSize={'sm'}>One or more attributes are mapped to the same data</Text>, status: "warning", duration: 3000, variant: "subtle"
+            });
+        }
+
+        if (current && current.type === "node") {
+            if (current.index === null || current.index === '' || current.index === undefined){
+                toast({
+                    title: <Text fontSize={'sm'}>No attributes has been indexed. Default indexing will be followed</Text>, status: "warning", duration: 3000, variant: "subtle"
+                });
             }
-            alert(errorMessage);
-            return; 
+        }
+
+
+        if (current && current.type === "relationships") {
+            if (current.node1 === null || current.node1 === '' || current.node1 === undefined || current.node2 === null || current.node2 === '' || current.node2 === undefined){
+                toast({
+                    title: <Text fontSize={'sm'}>Unmapped nodes detected</Text>, status: "warning", duration: 3000, variant: "subtle"
+                });
+                return;
+            } else if(current.node1 === current.node2){
+                toast({
+                    title: <Text fontSize={'sm'}>Pseudo relationship has been detected</Text>, status: "warning", duration: 3000, variant: "subtle"
+                });
+            }
+
         }
     
         if (current && current.type === "node") {
@@ -139,12 +189,16 @@ const EntitySandBox = ({ storeData, current, setCurrent, columns }) => {
             updatedRelationships[current.name] = newRelationshipData;
             storeData.relationships = updatedRelationships;
         }
+
+        setCurrent(prevCurrent => ({
+            ...prevCurrent,
+            index: indexedAttributes
+        }));
         setStoreData(storeData);
     
         setCurrent({});
     };
     
-
     return (
         current && (
             <Flex bg={"gray.50"} p={2} height={"60vh"}>
@@ -175,11 +229,11 @@ const EntitySandBox = ({ storeData, current, setCurrent, columns }) => {
                                     </Text>
                                     {
                                         Object.entries(current.attributes).length !== 0 ?
-                                        <RadioGroup onChange={handleSetNodeIndex} value={current.index}>
+                                        <CheckboxGroup value={indexedAttributes} onChange={handleSetNodeIndex}>
                                             {
                                                 Object.entries(current.attributes).map(([key, param]) => (
                                                     <Flex key={key}>
-                                                        <Radio width={"7%"} value={param.key} isDisabled={isDuplicate(param.key)} />
+                                                        <Checkbox value={key} isChecked={indexedAttributes.includes(key)}/>
                                                         <Input
                                                             _focus={{ boxShadow: "none", outline: "none" }}
                                                             borderRadius={0}
@@ -211,7 +265,7 @@ const EntitySandBox = ({ storeData, current, setCurrent, columns }) => {
                                                     </Flex>
                                                 ))
                                             }
-                                        </RadioGroup>
+                                        </CheckboxGroup>
                                         : <Flex p={2} justifyContent={'center'}>
                                             <Text fontSize={'2xs'}>Click <b>Add Attribute</b> to add new attributes </Text>
                                         </Flex>
@@ -225,12 +279,6 @@ const EntitySandBox = ({ storeData, current, setCurrent, columns }) => {
                                     <Button size={"sm"} variant={"ghost"} onClick={cancelSandBoxEvent}>
                                         <Text fontSize={"xs"}>Cancel</Text>
                                     </Button>
-                                    {
-                                        validateProperties(current) === true &&
-                                            <Button size={"sm"} colorScheme="yellow" variant={"ghost"}>
-                                                <Text fontSize={"xs"}>Potential issues Found!</Text>
-                                            </Button>
-                                    }
                                 </Flex>
                                 <Flex justifyContent={"end"} p={2} gap={3}>
                                     <Button size={"sm"} variant={"ghost"} onClick={addAttribute}>
@@ -299,11 +347,11 @@ const EntitySandBox = ({ storeData, current, setCurrent, columns }) => {
                                     <Text fontSize={"sm"} fontWeight={"bold"} mb={3}>
                                         Attributes
                                     </Text>
-                                    <RadioGroup onChange={handleSetNodeIndex} value={current.index}>
+                                    <CheckboxGroup value={indexedAttributes} onChange={setIndexedAttributes}>
                                     {
                                         Object.entries(current.attributes).map(([key, param]) => (
                                             <Flex key={key}>
-                                                <Radio width={"7%"} value={param.key} isDisabled={isDuplicate(param.key)} />
+                                                <Checkbox value={param.key} isChecked={indexedAttributes.includes(param.key)} onChange={(e) => handleSetNodeIndex(param.key)} />
                                                 <Input
                                                     _focus={{ boxShadow: "none", outline: "none" }}
                                                     borderRadius={0}
@@ -333,7 +381,7 @@ const EntitySandBox = ({ storeData, current, setCurrent, columns }) => {
                                             </Flex>
                                         ))
                                     }
-                                    </RadioGroup>
+                                    </CheckboxGroup>
 
                                 </Box>
                             </Flex>

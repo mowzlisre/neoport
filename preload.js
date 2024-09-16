@@ -1,10 +1,19 @@
-const { contextBridge, shell } = require("electron");
+const { contextBridge, shell, ipcRenderer } = require("electron");
 const fs = require('fs');
 const Papa = require('papaparse');
 const { identifyDataType } = require("./lib/parser");
-const { loadPreferences, savePreferences } = require("./lib/preferences");
+const { createHiddenDirectory, preRunCheck, checkForExisting, saveFile, openProject, decrypt } = require("./lib/preferences");
 const { getDataBaseStatus } = require("./lib/neo4j");
 
+
+contextBridge.exposeInMainWorld( 'ipcRenderer', {
+    send: (channel, data) => {
+      ipcRenderer.send(channel, data);
+    },
+    on: (channel, listener) => ipcRenderer.on(channel, listener),
+    removeAllListeners: (channel) => ipcRenderer.removeAllListeners(channel)
+  }
+);
 
 contextBridge.exposeInMainWorld('electron', {
     openHttp: (url) => {
@@ -87,18 +96,28 @@ contextBridge.exposeInMainWorld('electron', {
                 });
         });
     },
+    saveProfile: (data, filename) => {
+        try {
+            const jsonData = JSON.stringify(data, null, 2);
+            fs.writeFileSync(filename, jsonData);
+            console.log(`Data saved to ${filename}`);
+        } catch (error) {
+            console.error('Error saving data to JSON file:', error);
+        }
+    },
+    createProject: (data) => {
+        createHiddenDirectory()
+        const path = saveFile(data)
+        return path
+    },
+    checkForExisting: checkForExisting,
+    loadFromBuffer: openProject,
+
 });
 
 contextBridge.exposeInMainWorld('settings', {
-    getPref: () => loadPreferences(),
-    setPref: (preferences) =>  savePreferences(preferences),
-    testConnection: async () => {
-        try {
-            const status = await getDataBaseStatus();
-            return status;
-        } catch (error) {
-            console.error('Error testing connection:', error);
-            return "error";
-        }
-    }
+    testConnection: getDataBaseStatus,
+    getPref: () => {
+        return preRunCheck()
+    },
 });

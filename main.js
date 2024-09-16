@@ -1,36 +1,104 @@
-const { app, BrowserWindow } = require("electron");
-const url = require('url')
-const path = require('path')
+const { app, BrowserWindow, ipcMain } = require("electron");
+const path = require("path");
+let welcomeWindow;
+let mainWindow;
 
-const createMainWindow = () => {
-    const mainWindow = new BrowserWindow({
+const route = "http://localhost:3000/#";
+
+const createWindow = (width, height, urlPath, options = {}) => {
+    const newWindow = new BrowserWindow({
+        width: width,
+        height: height,
+        webPreferences: {
+            nodeIntegration: true,
+            contextIsolation: true,
+            preload: path.join(__dirname, './preload.js'),
+        },
+        ...options,
+    });
+    newWindow.loadURL(urlPath);
+    return newWindow;
+};
+
+const createWelcomeWindow = () => {
+    const welcomeUrl = `${route}/prompt`;
+
+    welcomeWindow = createWindow(800, 500, welcomeUrl, {
+        resizable: false,
+        frame: false,
+    });
+
+    welcomeWindow.on('closed', () => {
+        welcomeWindow = null;
+    });
+
+    return welcomeWindow;
+};
+
+const createMainWindow = (data) => {
+    const mainUrl = `${route}/app`;
+
+    mainWindow = createWindow(1200, 800, mainUrl, {
         title: "NeoPort",
         minWidth: 1200,
         minHeight: 800,
-        width: 1200,
-        height: 800,
-        webPreferences: {
-            contextIsolation: true,
-            nodeIntegration: true,
-            preload: path.join(__dirname, './preload.js'),
-            //devTools: false
-        },
-        
-    })
-    const startUrl = url.format({
-        pathname: path.join( __dirname, 'app/build/index.html'),
-        protocol: 'file'
-    })
-    //mainWindow.loadURL(startUrl)
+    });
 
-    mainWindow.loadURL("http://localhost:3000")
-}
+    mainWindow.webContents.on('did-finish-load', () => {
+        mainWindow.webContents.send('openWithFilePath', data);
+    });
+
+    mainWindow.on('closed', () => {
+        mainWindow = null;
+    });
+
+    return mainWindow;
+};
 
 app.whenReady().then(() => {
-    createMainWindow()
-})
+    ipcMain.on("closeWindow", () => {
+        if (welcomeWindow) welcomeWindow.close();
+        if (mainWindow) mainWindow.close();
+    });
 
+    ipcMain.on("proceedFromNewProject", (event, data) => {
+        if (welcomeWindow) welcomeWindow.close();
+        createMainWindow(data);
+    });
 
-app.on('will-quit', () => {
-    globalShortcut.unregisterAll();
+    ipcMain.on("proceedFromRecentProject", (event, data) => {
+        if (welcomeWindow) welcomeWindow.close();
+        createMainWindow(data);
+    });
+
+    ipcMain.on("proceedFromRawProject", (event, data) => {
+        if (welcomeWindow) welcomeWindow.close();
+        createMainWindow(data);
+        welcomeWindow.webContents.on('did-finish-load', () => {
+            welcomeWindow.webContents.send('returnOnProceedFromRawProject');
+        });
+    });
+
+    ipcMain.on("returnOnFileNotFoundErrorToWelcome", () => {
+        if (mainWindow) mainWindow.close();
+        welcomeWindow = createWelcomeWindow();
+        welcomeWindow.webContents.on('did-finish-load', () => {
+            welcomeWindow.webContents.send('returnOnFileNotFoundErrorToWelcome');
+        });
+    });
+
+    ipcMain.on("returnBackToWelcomeScreen", () => {
+        if (mainWindow) mainWindow.close();
+        createWelcomeWindow();
+    });
+
+    createWelcomeWindow();
+});
+
+app.on('window-all-closed', () => {
+    if (process.platform !== 'darwin') app.quit();
+});
+
+app.on('activate', () => {
+    if (BrowserWindow.getAllWindows().length === 0) createWelcomeWindow();
 });

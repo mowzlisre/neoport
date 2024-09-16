@@ -54,6 +54,7 @@ export const parseData = async(storeData, dispatch, headers, dataType) => {
     return dataType;
 }
 
+
 export const fetchData = async (storeData, setColumns, dispatch, navigate, toast) => {
     try {
         dispatchStatus(dispatch, "Reading File")
@@ -81,13 +82,11 @@ export const fetchData = async (storeData, setColumns, dispatch, navigate, toast
             }
             storeData["dataTypes"] = dataType;
             dispatch(setStoreData(storeData));
-        } else {
-            toast({
-                title: <Text fontSize={'sm'}>File not found</Text>, status: "error", duration: 3000, variant: "subtle"
-            });
-            navigate('/upload');
-            return;
         }
+        // else {
+        //     window.ipcRenderer.send('returnOnFileNotFoundErrorToWelcome');
+        //     return;
+        // }
         dispatchStatus(dispatch, "")
 
 

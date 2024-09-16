@@ -8,9 +8,14 @@ const EntityTab = ({storeData, current, setCurrent}) => {
         setCurrent({
             attributes: {},
             type: "node",
-            index: "",
+            index: [],
             issues: {
-                duplicateImport: false
+                duplicateImport: false,
+                invalidAttribute: false,
+                invalidEntityName: false,
+                indexed: false, 
+                unmapped: false,
+                collision: false,
             },
             name: null
         })
@@ -20,17 +25,22 @@ const EntityTab = ({storeData, current, setCurrent}) => {
         setCurrent({
             attributes: {},
             type: "relationships",
-            index: "",
+            index: [],
             issues: {
                 duplicateImport: false,
+                invalidAttribute: false,
+                invalidEntityName: false,
+                indexed: false, 
+                unmapped: false,
+                collision: false,
                 isPseudo: false
             },
-            name: null
+            name: null,
         })
     }
 
     const showStore = () => {
-        console.log(storeData)
+        
     }
 
 

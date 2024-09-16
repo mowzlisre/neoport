@@ -10,9 +10,9 @@ const HeaderTab = ({columns, storeData}) => {
     const dispatch = useDispatch();
     const navigate = useNavigate();
     const handleBack = () => {
-        dispatch(setStoreData(storeData));
-        navigate('/upload')
+        window.ipcRenderer.send('returnBackToWelcomeScreen')
     }
+
     return (
         <Box p={2} width={"25%"} bg={"aliceblue"}>
             <Flex gap={1} p={3} justifyContent={'space-evenly'}>
@@ -26,7 +26,7 @@ const HeaderTab = ({columns, storeData}) => {
                 <Box width={"20%"}></Box>
             </Flex>
             {
-                columns.length !== 0 ?
+                storeData.filePath !== null ? columns.length !== 0 ?
                     <Flex p={1}>
                         <Box borderRadius={5} bg={"white"} w={"100%"} p={3} height={"50vh"} overflow={"auto"}>
                             {
@@ -42,6 +42,10 @@ const HeaderTab = ({columns, storeData}) => {
                         <Spinner size={'md'} thickness="4px" emptyColor='gray.200' color='blue.500' />
                         <Text my={"auto"} fontSize={'sm'}>Identifying headers</Text>
                     </Flex>
+                : 
+                <Flex borderRadius={5} bg={"white"} w={"100%"} p={5} gap={4} justifyContent={'center'}>
+                    <Text my={"auto"} fontSize={'sm'}>Add Data Source</Text>
+                </Flex>
             }
         </Box>
     )

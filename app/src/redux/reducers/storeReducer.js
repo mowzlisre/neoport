@@ -1,4 +1,7 @@
 const initialState = {
+  projectTitle: null,
+  projectDescription: null,
+  projectHash: null,
   csvData : {},
   filePath: null,
   fileName: null,
@@ -21,6 +24,7 @@ const storeReducer = (state = initialState, action) => {
     case "SET_STORE_DATA":
       return {
         ...state,
+        projectHash: action.payload.projectHash,
         filePath: action.payload.filePath,
         fileName: action.payload.fileName,
         fileSize: action.payload.fileSize,
