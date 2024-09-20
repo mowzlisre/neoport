@@ -1,17 +1,14 @@
 import { Button, Modal, ModalBody, ModalContent, ModalFooter, ModalOverlay } from "@chakra-ui/react"
 
-const ModalBox = ({isOpen, onClose, element}) => {
+const ModalBox = ({isOpen,element, size}) => {
     return (
         <>
-            <Modal isOpen={isOpen} onClose={onClose} isCentered size={"3xl"}>
+            <Modal isOpen={isOpen} isCentered size={size}>
                 <ModalOverlay />
                 <ModalContent>
-                    <ModalBody p={10}>
+                    <ModalBody p={5}>
                         {element}
                     </ModalBody>
-                    <ModalFooter>
-                        <Button variant={"ghost"} onClick={onClose} _focus={{ outline: "none" }}>Close</Button>
-                    </ModalFooter>
                 </ModalContent>
             </Modal>
         </>

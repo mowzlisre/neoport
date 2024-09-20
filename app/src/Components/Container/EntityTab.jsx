@@ -1,5 +1,4 @@
 import { Avatar, AvatarBadge, Box, Button, Flex, Tag, Text } from "@chakra-ui/react"
-import { useState } from "react";
 import { FaPlus } from "react-icons/fa6";
 import { validateProperties } from "../lib/conf";
 
@@ -40,21 +39,21 @@ const EntityTab = ({storeData, current, setCurrent}) => {
     }
 
     const showStore = () => {
-        
+        console.log(storeData)
     }
 
 
     return (
-        <Flex p={1} gap={3} direction={"column"}>
-            <Box borderRadius={5} bg={"aliceblue"} width={"100%"} p={5}>
+        <Flex p={1} gap={2} direction={"column"}>
+            <Box borderRadius={5} bg={"aliceblue"} width={"100%"} p={4} pb={3}>
                 <Text fontWeight={'bold'} fontSize={"sm"}>Nodes</Text>
                 <Box width={"100%"} overflow={"auto"} my={2}>
-                    <Flex gap={4} py={3}>
+                    <Flex gap={4} pb={3}>
                         <Box role="button" onClick={handleAddNewNode}>
-                            <Avatar icon={<FaPlus fontSize='1.5rem' />} />
+                            <Avatar icon={<FaPlus fontSize='1rem' />} />
                         </Box>
                         {
-                            Object.keys(storeData.nodes).map((item) => (
+                            Object.keys(storeData.nodes)?.map((item) => (
                                 <Box key={item} role="button" onClick={() => {
                                         let dat = storeData.nodes[item]
                                         dat["type"] = "node"
@@ -73,10 +72,10 @@ const EntityTab = ({storeData, current, setCurrent}) => {
                     </Flex>
                 </Box>
             </Box>
-            <Box borderRadius={5} bg={"aliceblue"} width={"100%"} p={5}>
+            <Box borderRadius={5} bg={"aliceblue"} width={"100%"} p={4} pb={3}>
                 <Text fontWeight={'bold'} fontSize={"sm"}>Relationships</Text>
                 <Box width={"100%"} overflow={"auto"} my={1}>
-                    <Flex gap={2} py={3}>
+                    <Flex gap={2} pb={3}>
                         <Box role="button" onClick={handleAddNewRelationship}>
                             <Tag bg={"gray.400"} color={"white"} justifyContent={'center'} fontSize={"xs"} fontWeight={"bold"} width={"60px"}>
                                 <FaPlus fontSize={10} />

@@ -16,7 +16,6 @@ const PreviewTab = ({ storeData, columns }) => {
         }
     };
     return (
-
         <Flex height={"35.5vh"} bg={"hite"} p={3} pb={0}>
             {
                 storeData.filePath !== null ? storeData["csvData"].length > 0 && storeData.dataTypes ?

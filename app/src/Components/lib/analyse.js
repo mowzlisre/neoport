@@ -94,3 +94,16 @@ export const fetchData = async (storeData, setColumns, dispatch, navigate, toast
         console.error("Error:", error);
     }
 };
+
+
+export const checkNodeInRelationships = (relationships, nodeName) => {
+    for (let key in relationships) {
+        if (relationships.hasOwnProperty(key)) {
+            let relationship = relationships[key];
+            if (relationship.node1 === nodeName || relationship.node2 === nodeName) {
+                return true; // Node found in either node1 or node2
+            }
+        }
+    }
+    return false; // Node not found
+}
