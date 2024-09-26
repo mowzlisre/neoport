@@ -96,11 +96,10 @@ contextBridge.exposeInMainWorld('electron', {
                 });
         });
     },
-    saveProfile: (data, filename) => {
+    saveProject: (data, filePath) => {
         try {
             const jsonData = JSON.stringify(data, null, 2);
-            fs.writeFileSync(filename, jsonData);
-            console.log(`Data saved to ${filename}`);
+            fs.writeFileSync(filePath, jsonData);
         } catch (error) {
             console.error('Error saving data to JSON file:', error);
         }

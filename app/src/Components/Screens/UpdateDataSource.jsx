@@ -26,8 +26,10 @@ const UpdateDataSource = () => {
         if (files.length > 0) {
             const file = files[0];
             if (file.type === 'text/csv' || /\.csv$/.test(file.name)) {
-                dispatch(setStoreData({ projectHash: file.projectHash, filePath: file.path, fileName: file.name, fileSize: file.size, 
-                    headers: storeData["headers"], parseDataTypes: storeData["parseDataTypes"], linesCount: 0, dataTypes: storeData["dataTypes"] }));
+                storeData["fileName"] = file.name
+                storeData["fileSize"] = file.size
+                storeData["filePath"] = file.path
+                dispatch(setStoreData(storeData));
             } else {
                 toast({
                     title: <Text fontSize={'sm'}>Unsupported File Type</Text>,
@@ -96,10 +98,6 @@ const UpdateDataSource = () => {
         window.ipcRenderer.send('proceedFromNewProject', {path});
     }
 
-    const handleAnalyseLater = () => {
-        const path = createProject(storeData)
-        window.ipcRenderer.send('proceedFromRawProject', {path});
-    }
     return (
         <div className='fade-in'>
             <Box position={"fixed"} top={15} right={15} sx={{ cursor: 'pointer' }} onClick={handleCloseWindow}>
@@ -151,8 +149,6 @@ const UpdateDataSource = () => {
                                 <Button size={'sm'} leftIcon={<IoCloudUploadOutline />} variant='solid'  onClick={openFileDialog}>
                                     <Text fontSize={'xs'}>Choose File</Text>
                                 </Button>
-                                <Button size={'sm'} variant={'ghost'} fontSize={'xs'} onClick={handleAnalyseLater}>Add Later</Button>
-
                                 <Button size={'sm'} variant='ghost'>
                                     <Text fontSize={'xs'} onClick={() => navigate('/newproject')}>Back</Text>
                                 </Button>

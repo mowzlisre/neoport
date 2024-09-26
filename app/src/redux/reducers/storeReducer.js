@@ -24,10 +24,16 @@ const storeReducer = (state = initialState, action) => {
     case "SET_STORE_DATA":
       return {
         ...state,
+        projectTitle: action.payload.projectTitle,
+        projectDescription: action.payload.projectDescription,
         projectHash: action.payload.projectHash,
+        csvData: action.payload.csvData,
         filePath: action.payload.filePath,
         fileName: action.payload.fileName,
         fileSize: action.payload.fileSize,
+        headers: action.payload.headers,
+        nodes: action.payload.nodes,
+        relationships: action.payload.relationships,
         dataTypes: action.payload.dataTypes,
         parseDataTypes: action.payload.parseDataTypes,
         linesCount: action.payload.linesCount,

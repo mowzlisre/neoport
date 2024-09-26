@@ -3,7 +3,6 @@ import { useDispatch, useSelector } from 'react-redux';
 import {  useToast } from '@chakra-ui/react'
 import { useNavigate, useParams } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
-import SettingsModal from "../Settings/SettingsModal";
 import StatusBar from "../Container/StatusBar";
 import PreviewTab from "../Container/PreviewTab";
 import { fetchData } from "../lib/analyse";
@@ -13,6 +12,7 @@ import EntitySandBox from "../Container/EntitySandBox";
 import ModalBox from "../Elements/ModalBox";
 import { setStoreData } from "../../redux/actions/storeActions";
 import _ from 'lodash';
+import NavBar from "../Container/NavBar";
 
 function Analyse() {
     const storeData = useSelector((state) => state.storeData)
@@ -25,6 +25,7 @@ function Analyse() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [current, setCurrent] = useState({})
     const [modalElement, setModalElement] = useState(null);
+    const [modalSize, setModalSize] = useState('lg');
 
     const testConnection = async () => {
         const state = await window.settings.testConnection();
@@ -35,7 +36,9 @@ function Analyse() {
         const fetchDataFromBuffer = async () => {
             try {
                 window.ipcRenderer.on('openWithFilePath', async (event, data) => {
+                    localStorage.setItem('currentProject', data.path)
                     const sata = await window.electron.loadFromBuffer(data.path); 
+                    window.electron.saveProject(sata, localStorage.getItem('currentProject'))
                     dispatch(setStoreData(sata));
                 })
             } catch (error) {
@@ -69,8 +72,9 @@ function Analyse() {
         testConnection();
     }, [])
 
-    const openSetModal = (element) => {
+    const openSetModal = (element, size) => {
         setModalElement(element);
+        setModalSize(size)
         setIsModalOpen(true);
     }
 
@@ -81,18 +85,20 @@ function Analyse() {
 
     return (
         <>
-            <Flex height="60vh" flexDirection="row">
+            <NavBar/>
+            <Divider/>
+            <Flex height="55vh" flexDirection="row">
                 <HeaderTab {...{columns, storeData}}/>
-                <Center height='60vh'>
+                <Center height='55vh'>
                     <Divider orientation='vertical' bg={"aliceblue"} />
                 </Center>
                 <Box width={"50%"}>
-                    <EntitySandBox {...{storeData, current, setCurrent, columns, openSetModal}}/>
+                    <EntitySandBox {...{storeData, current, setCurrent, columns, openSetModal, closeModal}}/>
                 </Box>
-                <Center height='60vh'>
+                <Center height='55vh'>
                     <Divider orientation='vertical' bg={"aliceblue"} />
                 </Center>
-                <Box p={3} width={"25%"}>
+                <Box p={1} width={"25%"}>
                     <EntityTab {...{storeData, current, setCurrent}} />
                 </Box>
             </Flex>
@@ -100,7 +106,7 @@ function Analyse() {
             <PreviewTab {...{storeData, columns }} />
             <Divider />
             <StatusBar {...{storeData, dbStatus, setDbStatus, openSetModal, columns, status}} />
-            <ModalBox isOpen={isModalOpen} onClose={closeModal} element={modalElement} />
+            <ModalBox isOpen={isModalOpen} element={modalElement} size={modalSize} />
         </>
     );
 }

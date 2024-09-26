@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain } = require("electron");
+const { app, BrowserWindow, ipcMain, Menu } = require("electron");
 const path = require("path");
 let welcomeWindow;
 let mainWindow;
@@ -47,6 +47,7 @@ const createMainWindow = (data) => {
     mainWindow.webContents.on('did-finish-load', () => {
         mainWindow.webContents.send('openWithFilePath', data);
     });
+    mainWindow.webContents.openDevTools()
 
     mainWindow.on('closed', () => {
         mainWindow = null;
@@ -56,6 +57,7 @@ const createMainWindow = (data) => {
 };
 
 app.whenReady().then(() => {
+    Menu.setApplicationMenu(null);
     ipcMain.on("closeWindow", () => {
         if (welcomeWindow) welcomeWindow.close();
         if (mainWindow) mainWindow.close();

@@ -4,7 +4,10 @@ import SettingsModal from "../Settings/SettingsModal"
 
 const StatusBar = ({storeData, dbStatus, setDbStatus, openSetModal, columns, status}) => {
     return (
-        <Flex height={"4vh"} bg={"aliceblue"} justifyContent={"end"} px={10}>
+        <Flex height={"4vh"} bg={"aliceblue"} justifyContent={'space-between'} px={4}>
+            <Flex>
+                <Text fontSize={'xs'} my={'auto'}>{localStorage.getItem('currentProject')}</Text>
+            </Flex> 
             <Flex gap={3} my={'auto'}>
                 {
                     status.status !== '' &&
