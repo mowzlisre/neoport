@@ -16,9 +16,9 @@ const NodeEntityForm = ({ current, setCurrent, indexedAttribute, setIndexedAttri
 
 
     const handleEntityNameChange = (e) => {
-        const value = e.target.value;
+        const value = e.target.value.trim();
         const validNamePattern = /^[a-zA-Z0-9_]+$/;
-        if (value === '' || validNamePattern.test(value)) {
+        if (value.trim() === '' || validNamePattern.test(value)) {
             setCurrent((prevCurrent) => ({
                 ...prevCurrent,
                 name: value,
@@ -30,7 +30,7 @@ const NodeEntityForm = ({ current, setCurrent, indexedAttribute, setIndexedAttri
         setIndexedAttribute(value);
         setCurrent((prevCurrent) => ({
             ...prevCurrent,
-            index: [parseInt(value, 10)] // Store the selected index in an array
+            index: [parseInt(value, 10)]
         }));
     };
 
@@ -142,7 +142,7 @@ const NodeEntityForm = ({ current, setCurrent, indexedAttribute, setIndexedAttri
                                                 size={"sm"}
                                                 value={param.key}
                                                 placeholder='params'
-                                                onChange={(e) => handleAttributeKeyChange(key, e.target.value)}
+                                                onChange={(e) => handleAttributeKeyChange(key, e.target.value.trim())}
                                             />
                                             <Flex>
                                                 <Text m={'auto'}>

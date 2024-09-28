@@ -6,17 +6,17 @@ import { TbCirclesRelation } from "react-icons/tb";
 
 const RelationshipEntityForm = ({ current, setCurrent, storeData, columns, saveEntity, cancelSandBoxEvent, openSetModal, closeModal, removeCurrentNode }) => {
     const toast = useToast();
-    const [key, setKey] = useState(current.name || '')
+    const [key, setKey] = useState(null)
 
     
     useEffect(() => {
-        setKey(current.name || '')
+        setKey(current.name)
     }, [])
 
     const handleEntityNameChange = (e) => {
-        const value = e.target.value;
+        const value = e.target.value.trim();
         const validNamePattern = /^[a-zA-Z0-9_]+$/;
-        if (value === '' || validNamePattern.test(value)) {
+        if (value.trim() === '' || validNamePattern.test(value)) {
             setCurrent((prevCurrent) => ({
                 ...prevCurrent,
                 name: value,
@@ -133,6 +133,7 @@ const RelationshipEntityForm = ({ current, setCurrent, storeData, columns, saveE
                         >
                             <option disabled value="">--- Select a field ---</option>
                             {Object.keys(storeData.nodes).map((item, index) => (
+                                item !== '' &&
                                 <option key={index} value={item}>
                                     {item}
                                 </option>
@@ -174,7 +175,7 @@ const RelationshipEntityForm = ({ current, setCurrent, storeData, columns, saveE
                                         size={"sm"}
                                         value={param.key}
                                         placeholder='params'
-                                        onChange={(e) => handleAttributeKeyChange(key, e.target.value)}
+                                        onChange={(e) => handleAttributeKeyChange(key, e.target.value.trim())}
                                     />
 
                                     <Flex>

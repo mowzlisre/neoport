@@ -1,21 +1,14 @@
-import { Avatar, AvatarBadge, Box, Button, Flex, Tag, Text } from "@chakra-ui/react"
+import { Avatar, AvatarBadge, Box, Button, Flex, Tag, Text, useToast } from "@chakra-ui/react"
 import { FaPlus } from "react-icons/fa6";
-import { validateProperties } from "../lib/conf";
+import { validateProjectData } from "../lib/conf";
 
 const EntityTab = ({storeData, current, setCurrent}) => {
+    const toast = useToast()
     const handleAddNewNode = () => {
         setCurrent({
             attributes: {},
             type: "node",
             index: [],
-            issues: {
-                duplicateImport: false,
-                invalidAttribute: false,
-                invalidEntityName: false,
-                indexed: false, 
-                unmapped: false,
-                collision: false,
-            },
             name: null
         })
     }
@@ -24,22 +17,20 @@ const EntityTab = ({storeData, current, setCurrent}) => {
         setCurrent({
             attributes: {},
             type: "relationships",
-            index: [],
-            issues: {
-                duplicateImport: false,
-                invalidAttribute: false,
-                invalidEntityName: false,
-                indexed: false, 
-                unmapped: false,
-                collision: false,
-                isPseudo: false
-            },
             name: null,
         })
     }
 
-    const showStore = () => {
-        console.log(storeData)
+    const transformAndExport = () => {
+        let result = validateProjectData(storeData)
+        if(!result.valid){
+            toast({
+                title: <Text fontSize={'sm'}>{result.error}</Text>,
+                status: "warning", duration: 3000, variant: "subtle"
+            });
+        } else{
+            console.log("Ready for ETL")
+        }
     }
 
 
@@ -60,11 +51,9 @@ const EntityTab = ({storeData, current, setCurrent}) => {
                                         dat["name"] = item
                                         setCurrent(dat)
                                     }}>
-                                    <Avatar name={item}>
-                                        {
-                                            validateProperties(storeData.nodes[item]) === true &&
-                                            <AvatarBadge borderColor='papayawhip' bg='tomato' boxSize='1em' />
-                                        }
+                                    <Avatar 
+                                        name={(item.trim() === '' || storeData.nodes[item].name.trim() === '') ? "!" : item} 
+                                        backgroundColor={(item.trim() === '' || storeData.nodes[item].name.trim() === '') ? "red.500" : undefined}>
                                     </Avatar>
                                 </Box>
                             ))
@@ -89,18 +78,22 @@ const EntityTab = ({storeData, current, setCurrent}) => {
                                         dat["name"] = item
                                         setCurrent(dat)
                                     }}>
-                                    <Tag bg={"gray.400"} color={"white"} justifyContent={'center'} fontSize={"xs"} fontWeight={"bold"}>
-                                        <Text fontSize={"xs"} px={2}>{item}</Text>
-                                    </Tag>
+                                        {storeData.relationships[item].node1 !== '' && storeData.relationships[item].node2 !== '' ? (
+                                            <Tag bg="gray.400" color="white" minWidth="70px" justifyContent="center" fontSize="xs" fontWeight="bold">
+                                                <Text>{item}</Text>
+                                            </Tag>
+                                        ) : <Tag bg="red.500" color="white" minWidth="70px" justifyContent="center" fontSize="xs" fontWeight="bold">
+                                                <Text>! Error</Text>
+                                            </Tag>
+                                        }
+
                                 </Box>
                             ))
                         }
                     </Flex>
                 </Box>
             </Box>
-            <Flex justifyContent={"end"}>
-                <Button size={'xs'} onClick={showStore}>Show</Button>
-            </Flex>
+            <Button fontSize={'sm'} onClick={transformAndExport}>Transform and Export to DB</Button>
         </Flex>
     )
 }

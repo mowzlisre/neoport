@@ -105,7 +105,7 @@ function Analyse() {
             <Divider />
             <PreviewTab {...{storeData, columns }} />
             <Divider />
-            <StatusBar {...{storeData, dbStatus, setDbStatus, openSetModal, columns, status}} />
+            <StatusBar {...{storeData, dbStatus, setDbStatus, openSetModal, columns, status, closeModal}} />
             <ModalBox isOpen={isModalOpen} element={modalElement} size={modalSize} />
         </>
     );

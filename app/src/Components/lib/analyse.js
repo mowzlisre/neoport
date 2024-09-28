@@ -1,6 +1,4 @@
 import { dispatchStatus } from "./functions";
-
-const { Text } = require("@chakra-ui/react");
 const { setStoreData, setStatusAction } = require("../../redux/actions/storeActions");
 const { checkForAbsolute } = require("./conf");
 

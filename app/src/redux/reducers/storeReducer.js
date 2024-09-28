@@ -11,7 +11,8 @@ const initialState = {
   relationships : {},
   dataTypes: {},
   parseDataTypes: false,
-  linesCount: 0
+  linesCount: 0,
+  db: {}
   // Add any other state properties you need
 };
 
@@ -37,6 +38,7 @@ const storeReducer = (state = initialState, action) => {
         dataTypes: action.payload.dataTypes,
         parseDataTypes: action.payload.parseDataTypes,
         linesCount: action.payload.linesCount,
+        db: action.payload.db,
       };
     default:
       return state;

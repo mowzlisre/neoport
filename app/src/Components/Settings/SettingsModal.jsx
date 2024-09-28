@@ -1,15 +1,21 @@
+import { Box, Button, Checkbox, Divider, Flex, Heading, Input, InputGroup, InputLeftAddon, InputRightElement, Spinner, Text, useToast } from '@chakra-ui/react';
 import React, { useEffect, useState } from 'react';
-import { Modal, ModalOverlay, ModalContent, ModalBody, Box, Flex, Divider, Button, Text, Heading, ModalFooter, InputGroup, InputLeftAddon, Input, InputRightElement, Spinner, Checkbox } from '@chakra-ui/react';
-import { FcAcceptDatabase, FcDataEncryption, FcDatabase, FcDeleteDatabase, FcKey, FcLink, FcMindMap, FcSettings } from 'react-icons/fc';
-import { defaultConf } from '../lib/conf';
-import { setStoreData } from '../../redux/actions/storeActions';
+import { FcAcceptDatabase, FcDataEncryption, FcDataSheet, FcDatabase, FcDeleteDatabase, FcKey, FcLink, FcMindMap } from 'react-icons/fc';
 import { useDispatch } from 'react-redux';
+import { setStoreData } from '../../redux/actions/storeActions';
+import { defaultConf } from '../lib/conf';
 
-function SettingsModal({ dbStatus, setDbStatus, storeData }) {
+function SettingsModal({ dbStatus, setDbStatus, storeData, closeModal }) {
     const [show, setShow] = useState(false)
     const handleClick = () => setShow(!show)
     const [isTesting, setIsTesting] = useState(false)
-    const [pref, setPref] = useState(window.settings.getPref() || defaultConf)
+    const [pref, setPref] = useState(defaultConf)
+    const [title, setTitle] = useState(storeData.projectTitle || '')
+    const toast = useToast()
+    const id = '000'
+    
+    const checkForExisting = window.electron.checkForExisting
+    const [fileExists, setFileExists] = useState(false)
 
     const testConnection = async () => {
         setIsTesting(true)
@@ -23,10 +29,7 @@ function SettingsModal({ dbStatus, setDbStatus, storeData }) {
         const newValue = e.target.value;
         setPref((prevPref) => ({
             ...prevPref,
-            database: {
-                ...prevPref.database,
-                URI: newValue,
-            },
+            URI: newValue,
         }));
     };
 
@@ -34,10 +37,7 @@ function SettingsModal({ dbStatus, setDbStatus, storeData }) {
         const newValue = e.target.value;
         setPref((prevPref) => ({
             ...prevPref,
-            database: {
-                ...prevPref.database,
-                username: newValue,
-            },
+            username: newValue,
         }));
     };
 
@@ -45,24 +45,89 @@ function SettingsModal({ dbStatus, setDbStatus, storeData }) {
         const newValue = e.target.value;
         setPref((prevPref) => ({
             ...prevPref,
-            database: {
-                ...prevPref.database,
-                password: newValue,
-            },
+            password: newValue,
         }));
     };
 
     useEffect(() => {
-        const settings = window.settings.getPref()
-        setPref(settings)
-        testConnection()
+        if (
+            storeData.db === undefined || 
+            storeData.db.length === 0 || 
+            (typeof storeData.db === 'object' && Object.keys(storeData.db).length === 0)
+        ) {
+            storeData["db"] = defaultConf.database;
+            setStoreData(storeData);
+            window.electron.saveProject(storeData, localStorage.getItem("currentProject"));
+            setPref(defaultConf);
+        } else {
+            setPref(storeData.db);
+        }
+        
     }, [])
 
+    useEffect(() => {
+        storeData["db"] = pref
+        setStoreData(storeData)
+        window.electron.saveProject(storeData, localStorage.getItem("currentProject"));
+    }, [pref])
+
+    const handleDataSourcePref = (e, val) => {
+        if(e === 'projectTitle'){
+            const title = val.trim()
+            const exists = checkForExisting(title)
+            console.log(title, exists)
+            if (title !== ''){
+                    setFileExists(exists)
+                    setTitle(title)
+                    if(exists === true && title !== storeData['projectTitle']){
+                        if (!toast.isActive(id)) {
+                            toast({
+                                title: 'Project already exists',
+                                status: 'error',
+                                duration: 2000,
+                            })
+                        }
+                    }
+            } else{
+                setTitle('')
+                setFileExists(true)
+            }
+        } else{
+            storeData[e] = val
+            setStoreData(storeData)
+            window.electron.saveProject(storeData, localStorage.getItem("currentProject"));
+        }
+    }
+
     return (
-        <Flex height={"50vh"} width={"100%"} direction="column" gap={7}>
+        <Flex width={"100%"} direction="column" p={3} gap={5}>
+            <Box mb={3}>
+                <Box>
+                    <Flex gap={3} mb={3} ml={2}>
+                        <Box my={"auto"}>
+                            <FcDataSheet fontSize={25} />
+                        </Box>
+                        <Heading color="gray.600" as='h6' size='md' my={"auto"}>Data Source</Heading>
+                    </Flex>
+                    <Divider />
+                </Box>
+                <Box gap={3} justifyContent={"left"} px={3}>
+                    <Flex mt={3} flexDirection={'column'}>
+                        <Input value={title} onChange={(e) => handleDataSourcePref("projectTitle", e.target.value)} isInvalid={fileExists} ></Input>
+                    </Flex>
+                    <Flex mt={3} flexDirection={'column'}>
+                        <Checkbox defaultChecked={storeData["headers"]} onChange={() => handleDataSourcePref("headers", !storeData["headers"])}><Text ml={2}>Has Headers</Text></Checkbox>
+                    </Flex>
+                    <Flex mt={3} flexDirection={'column'}>
+                        <Checkbox defaultChecked={storeData["parseDataTypes"]} onChange={() => handleDataSourcePref("parseDataTypes", !storeData["parseDataTypes"])}><Text ml={2}>Advanced Parsing</Text></Checkbox>
+                        <Text fontSize={'xs'}>Recommended if the data source has Lists (Arrays) and Maps (Objects) </Text>
+                    </Flex>
+                </Box>
+            </Box>
+
             <Box>
                 <Box>
-                    <Flex gap={3} mb={3}>
+                    <Flex gap={3} mb={3} ml={2}>
                         <Box my={"auto"}>
                             <FcMindMap fontSize={25} />
                         </Box>
@@ -70,7 +135,7 @@ function SettingsModal({ dbStatus, setDbStatus, storeData }) {
                     </Flex>
                     <Divider />
                 </Box>
-                <Box gap={3} justifyContent={"left"} px={3}>
+                <Box gap={3} justifyContent={"left"} px={2}>
                     <Flex mt={5} gap={3}>
                         <InputGroup width={"70%"}>
                             <InputLeftAddon bg={"white"} width={"50px"} justifyContent={"center"}>
@@ -82,7 +147,7 @@ function SettingsModal({ dbStatus, setDbStatus, storeData }) {
                                 _focus={{ boxShadow: 'none' }}
                                 _placeholder={{ fontSize: "sm" }}
                                 fontSize={"sm"}
-                                value={pref.database.URI || ''}
+                                value={pref.URI || ''}
                                 onChange={handleDatabaseUriChange}
                             />
                         </InputGroup>
@@ -101,7 +166,7 @@ function SettingsModal({ dbStatus, setDbStatus, storeData }) {
                                 _focus={{ boxShadow: 'none' }}
                                 _placeholder={{ fontSize: "sm" }}
                                 fontSize={"sm"}
-                                value={pref.database.username || ''}
+                                value={pref.username || ''}
                                 onChange={handleDatabaseUsernameChange}
                             />
                         </InputGroup>
@@ -121,7 +186,7 @@ function SettingsModal({ dbStatus, setDbStatus, storeData }) {
                                 _focus={{ boxShadow: 'none' }}
                                 _placeholder={{ fontSize: "sm" }}
                                 fontSize={"sm"}
-                                value={pref.database.password || ''}
+                                value={pref.password || ''}
                                 onChange={handleDatabasePasswordChange}
                             />
                             <InputRightElement width='4.5rem' role='button' onClick={handleClick}>
@@ -141,37 +206,25 @@ function SettingsModal({ dbStatus, setDbStatus, storeData }) {
                                             <FcDeleteDatabase />
                                             <Text fontWeight={"bold"} color={"red"} fontSize={"2xs"} my={"auto"}>Offline</Text>
                                         </Flex> :
-                                        dbStatus === "Neo.ClientError.Security.Unauthorized" ?
-                                            <Flex gap={1}>
-                                                <FcDataEncryption />
-                                                <Text fontWeight={"bold"} color={"orange"} fontSize={"2xs"} my={"auto"}>Unauthorized</Text>
-                                            </Flex> :
-                                            dbStatus === "ConnectionEstablished" &&
-                                            <Flex gap={1}>
-                                                <FcAcceptDatabase />
-                                                <Text fontWeight={"bold"} color={"green"} fontSize={"2xs"} my={"auto"}>Online</Text>
-                                            </Flex>
+                                    dbStatus === "Neo.ClientError.Security.Unauthorized" ?
+                                        <Flex gap={1}>
+                                            <FcDataEncryption />
+                                            <Text fontWeight={"bold"} color={"orange"} fontSize={"2xs"} my={"auto"}>Unauthorized</Text>
+                                        </Flex> :
+                                    dbStatus === "ConnectionEstablished" &&
+                                        <Flex gap={1}>
+                                            <FcAcceptDatabase />
+                                            <Text fontWeight={"bold"} color={"green"} fontSize={"2xs"} my={"auto"}>Online</Text>
+                                        </Flex>
                                 }
                             </Box>
                         </Flex>
                     </Flex>
                 </Box>
             </Box>
-
-            <Box>
-                <Box>
-                    <Flex gap={3} mb={3}>
-                        <Box my={"auto"}>
-                            <FcSettings fontSize={25} />
-                        </Box>
-                        <Heading color="gray.600" as='h6' size='md' my={"auto"}>Preferences</Heading>
-                    </Flex>
-                    <Divider />
-                </Box>
-                <Box gap={3} justifyContent={"left"} px={3}>
-
-                </Box>
-            </Box>
+            <Flex justifyContent={'end'}>
+                <Button onClick={closeModal} size={'sm'}>Cancel</Button>
+            </Flex>
 
         </Flex>
     );

@@ -3,17 +3,12 @@ import CytoscapeCanvas from "./CytoscapeCanvas";
 import NodeEntityForm from "./EntityForm/NodeEntityForm";
 import RelationshipEntityForm from "./EntityForm/RelationshipEntityForm";
 import { useToast } from "@chakra-ui/react";
-import { useState, useEffect } from "react";
-import { validateProperties } from "../lib/conf";
+import { useState } from "react";
 import { setStoreData } from "../../redux/actions/storeActions";
 
 const EntitySandBox = ({ storeData, current, setCurrent, columns, openSetModal, closeModal }) => {
     const toast = useToast();
     const [indexedAttribute, setIndexedAttribute] = useState("");
-
-    useEffect(() => {
-        validateProperties(current, setCurrent);
-    }, [current]);
 
     const cancelSandBoxEvent = () => {
         setCurrent({});
@@ -35,6 +30,13 @@ const EntitySandBox = ({ storeData, current, setCurrent, columns, openSetModal, 
         window.electron.saveProject(storeData, localStorage.getItem("currentProject"))
     }
 
+    function hasDuplicateAttributes(node) {
+        const attributeKeys = Object.values(node.attributes).map(attr => attr.key);
+        const uniqueKeys = new Set(attributeKeys);
+        return attributeKeys.length === uniqueKeys.size;
+    }
+    
+
     const saveEntity = (key) => {
         const isNameValid = current.name && current.name.trim() !== '';
         const allAttributesValid = Object.values(current.attributes).every(param => param.value.trim() !== '');
@@ -48,10 +50,18 @@ const EntitySandBox = ({ storeData, current, setCurrent, columns, openSetModal, 
             return;
         }
 
+        if(!hasDuplicateAttributes(current)){
+            toast({
+                title: <Text fontSize={'sm'}>Duplicate params found</Text>,
+                status: "warning", duration: 3000, variant: "subtle"
+            });
+            return
+        }
+
         if (current.type === "node") {
             const newNodeData = { ...current };
             const updatedNodes = { ...storeData.nodes };
-            if(key !== ''){
+            if(key !== null){
                 updatedNodes[current.name] = newNodeData;
                 if(key !== current.name){
                     delete updatedNodes[key]
@@ -63,7 +73,7 @@ const EntitySandBox = ({ storeData, current, setCurrent, columns, openSetModal, 
         } else if (current.type === "relationships") {
             const newRelationshipData = { ...current };
             const updatedRelationships = { ...storeData.relationships };
-            if(key !== ''){
+            if(key !== null){
                 updatedRelationships[current.name] = newRelationshipData;
                 if(key !== current.name){
                     delete updatedRelationships[key]

@@ -22,7 +22,7 @@ const NewProject = () => {
     }
 
     const titleOnChange = (e) => {
-        const title = e.target.value
+        const title = e.target.value.trim()
         const exists = checkForExisting(title)
         if (title !== ''){
             setFileExists(exists)

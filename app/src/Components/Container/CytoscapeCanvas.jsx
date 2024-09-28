@@ -2,27 +2,34 @@ import { Box } from '@chakra-ui/react';
 import React, { useRef } from 'react';
 import Cytoscape from 'react-cytoscapejs';
 import { MdZoomInMap } from "react-icons/md";
+import { validateAndFixEntities } from '../lib/conf';
 const CytoscapeCanvas = ({projectData}) => {
     const cyRef = useRef(null);
+    projectData = validateAndFixEntities(projectData)
 
-    const nodes = Object.keys(projectData.nodes).map((nodeKey) => ({
-        data: { id: nodeKey, label: projectData.nodes[nodeKey].name },
-    }));
+    const nodes = Object.keys(projectData.nodes)
+        .filter((nodeKey) => nodeKey.trim() !== '' && projectData.nodes[nodeKey].name.trim() !== '') // Ensure both nodeKey and name are not empty or spaces
+        .map((nodeKey) => ({
+            data: { id: nodeKey, label: projectData.nodes[nodeKey].name },
+        }));
 
-    const edges = Object.keys(projectData.relationships).map((relKey) => ({
-        data: {
-            source: projectData.relationships[relKey].node1,
-            target: projectData.relationships[relKey].node2,
-            label: projectData.relationships[relKey].name,
-        },
-    }));
+    const edges = Object.keys(projectData.relationships)
+        .filter((relKey) => projectData.relationships[relKey].node1.trim() !== '' && projectData.relationships[relKey].node2.trim() !== '' && projectData.relationships[relKey].name.trim() !== '') // Ensure node1, node2, and name are not empty or spaces
+        .map((relKey) => ({
+            data: {
+                source: projectData.relationships[relKey].node1,
+                target: projectData.relationships[relKey].node2,
+                label: projectData.relationships[relKey].name,
+            },
+        }));
+
 
 
     const elements = [...nodes, ...edges]
 
     const resetViewport = () => {
         if (cyRef.current) {
-            cyRef.current.fit(cyRef.current.elements(), 100, {
+            cyRef.current.fit(cyRef.current.elements(), 30, {
                 animate: true,  
                 duration: 1000,   
             });
@@ -36,12 +43,18 @@ const CytoscapeCanvas = ({projectData}) => {
                 elements={elements}
                 style={{ width: '100%', height: '100%' }}
                 layout={{
-                    name: 'grid',
+                    name: 'cose',
                     animate: true,  
+                    idealEdgeLength: 10,
+                    ready: () => {
+                        resetViewport()
+                    }
                   }}
                 cy={(cy) => {
                     cyRef.current = cy;
-                  }}
+                }}
+                
+                
                 stylesheet={[
                     {
                         selector: 'node',
@@ -53,6 +66,8 @@ const CytoscapeCanvas = ({projectData}) => {
                             'font-size': '8px',
                             color: '#fff',
                             'overlay-opacity': 0,
+                            width: "50px",
+                            height: "50px"
                         }
                     },
                     {
