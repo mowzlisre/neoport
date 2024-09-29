@@ -1,4 +1,4 @@
-import { Avatar, AvatarBadge, Box, Button, Flex, Tag, Text, useToast } from "@chakra-ui/react"
+import { Avatar, Box, Button, Flex, Tag, Text, useToast } from "@chakra-ui/react";
 import { FaPlus } from "react-icons/fa6";
 import { validateProjectData } from "../lib/conf";
 

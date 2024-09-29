@@ -1,5 +1,5 @@
 import { dispatchStatus } from "./functions";
-const { setStoreData, setStatusAction } = require("../../redux/actions/storeActions");
+const { setStoreData } = require("../../redux/actions/storeActions");
 const { checkForAbsolute } = require("./conf");
 
 export function secondsToTime(seconds) {
@@ -81,14 +81,15 @@ export const fetchData = async (storeData, setColumns, dispatch, navigate, toast
             storeData["dataTypes"] = dataType;
             dispatch(setStoreData(storeData));
         }
-        // else {
-        //     window.ipcRenderer.send('returnOnFileNotFoundErrorToWelcome');
-        //     return;
-        // }
+        else {
+            return;
+        }
         dispatchStatus(dispatch, "")
 
 
     } catch (error) {
+        const currentProject = localStorage.getItem("currentProject");
+        window.ipcRenderer.send('returnOnDataSourceMissing', {path: currentProject});
         console.error("Error:", error);
     }
 };

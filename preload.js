@@ -4,7 +4,7 @@ const Papa = require('papaparse');
 const { identifyDataType } = require("./lib/parser");
 const { createHiddenDirectory, preRunCheck, checkForExisting, saveFile, openProject, decrypt } = require("./lib/preferences");
 const { getDataBaseStatus } = require("./lib/neo4j");
-
+const path = require('path');
 
 contextBridge.exposeInMainWorld( 'ipcRenderer', {
     send: (channel, data) => {
@@ -108,6 +108,42 @@ contextBridge.exposeInMainWorld('electron', {
         createHiddenDirectory()
         const path = saveFile(data)
         return path
+    },
+    getProjectName : (filePath) => {
+        const baseName = path.basename(filePath);
+        const projectName = baseName.replace(path.extname(baseName), '');
+        return projectName;
+    },
+    renameProject: (oldPath, projectName) => {
+        return new Promise((resolve, reject) => {
+            if(projectName === '' || projectName === undefined || projectName === null){
+                return reject("Error: Saving file")
+            }
+            
+            if (!fs.existsSync(oldPath)) {
+                return reject(`Error: File "${oldPath}" does not exist.`);
+            }
+            const directory = path.dirname(oldPath);
+            const extension = path.extname(oldPath);
+            let newPath = path.join(directory, `${projectName}${extension}`);
+            if (fs.existsSync(newPath)) {
+                let counter = 1;
+                const baseName = projectName;
+                while (fs.existsSync(newPath)) {
+                    newPath = path.join(directory, `${baseName}_${counter}${extension}`);
+                    counter++;
+                }
+            }
+            fs.rename(oldPath, newPath, (err) => {
+                if (err) {
+                    return reject(`Error renaming file: ${err.message}`);
+                }
+                resolve({
+                    message: `File renamed to ${path.basename(newPath)}`,
+                    newPath: newPath
+                });
+            });
+        });
     },
     checkForExisting: checkForExisting,
     loadFromBuffer: openProject,

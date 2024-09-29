@@ -1,11 +1,12 @@
-import { Box, Button, Checkbox, Flex, HStack, Stack, Text, useToast, VStack } from "@chakra-ui/react"
-import { IoMdClose } from "react-icons/io"
-import { useNavigate } from "react-router-dom"
-import { formatFileSize, primaryColorBg } from "../lib/conf"
+import { Box, Button, Checkbox, Flex, HStack, Stack, Text, useToast, VStack } from "@chakra-ui/react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { IoMdClose } from "react-icons/io";
 import { IoCloudUploadOutline } from "react-icons/io5";
 import { useDispatch, useSelector } from "react-redux";
-import { useCallback, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { setStoreData } from "../../redux/actions/storeActions";
+import { formatFileSize, primaryColorBg } from "../lib/conf";
+
 
 const UpdateDataSource = () => {
 
@@ -21,6 +22,25 @@ const UpdateDataSource = () => {
     const fileInputRef = useRef(null);
 
     const toast = useToast();
+    const [existingProject, setExistingProject] = useState(false)
+
+    useEffect(() => {
+        window.ipcRenderer.on('returnToDataSourceMissing', async(event, data) => {
+            console.log(data)
+            const sata = await window.electron.loadFromBuffer(data.data.path); 
+            sata["filePath"] = null
+            sata["fileName"] = null
+            sata["fileSize"] = null
+            dispatch(setStoreData({...sata}))
+            setExistingProject(true)
+        });
+    
+        return () => {
+            window.ipcRenderer.removeAllListeners('returnToDataSourceMissing');
+        };
+    }, []);
+    
+
 
     const handleFile = useCallback((files) => {
         if (files.length > 0) {
@@ -99,6 +119,7 @@ const UpdateDataSource = () => {
     }
 
     return (
+        storeData &&
         <div className='fade-in'>
             <Box position={"fixed"} top={15} right={15} sx={{ cursor: 'pointer' }} onClick={handleCloseWindow}>
                 <IoMdClose />
@@ -135,9 +156,12 @@ const UpdateDataSource = () => {
                                             <Text fontSize={'xs'}>Replace File</Text>
                                         </Button>
                                         <Button size={'sm'} fontSize={'xs'} onClick={() => handleFileCancel()}>Cancel</Button>
-                                        <Button size={'sm'} variant='ghost'>
-                                            <Text fontSize={'xs'} onClick={() => navigate('/newproject')}>Back</Text>
-                                        </Button>
+                                        {
+                                            !existingProject &&
+                                            <Button size={'sm'} variant='ghost'>
+                                                <Text fontSize={'xs'} onClick={() => navigate('/newproject')}>Back</Text>
+                                            </Button>
+                                        }
                                     </HStack>
                                 </VStack>
                             </Box>
@@ -149,9 +173,12 @@ const UpdateDataSource = () => {
                                 <Button size={'sm'} leftIcon={<IoCloudUploadOutline />} variant='solid'  onClick={openFileDialog}>
                                     <Text fontSize={'xs'}>Choose File</Text>
                                 </Button>
-                                <Button size={'sm'} variant='ghost'>
-                                    <Text fontSize={'xs'} onClick={() => navigate('/newproject')}>Back</Text>
-                                </Button>
+                                {
+                                    !existingProject &&
+                                    <Button size={'sm'} variant='ghost'>
+                                        <Text fontSize={'xs'} onClick={() => navigate('/newproject')}>Back</Text>
+                                    </Button>
+                                }
 
                                 <input ref={fileInputRef} type="file" hidden onChange={handleFileSelect} accept=".csv" />
                                 </HStack>

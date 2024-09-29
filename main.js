@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, Menu } = require("electron");
+const { app, BrowserWindow, ipcMain, Menu, globalShortcut } = require("electron");
 const path = require("path");
 let welcomeWindow;
 let mainWindow;
@@ -20,13 +20,19 @@ const createWindow = (width, height, urlPath, options = {}) => {
     return newWindow;
 };
 
-const createWelcomeWindow = () => {
-    const welcomeUrl = `${route}/prompt`;
+const createWelcomeWindow = (path) => {
+
+    let welcomeUrl = `${route}/prompt`;
+    if(path === 'updatedatasource'){
+        welcomeUrl = `${route}/updatedatasource`;
+    }
 
     welcomeWindow = createWindow(800, 500, welcomeUrl, {
         resizable: false,
         frame: false,
     });
+
+    mainWindow.webContents.openDevTools()
 
     welcomeWindow.on('closed', () => {
         welcomeWindow = null;
@@ -58,6 +64,12 @@ const createMainWindow = (data) => {
 
 app.whenReady().then(() => {
     Menu.setApplicationMenu(null);
+    globalShortcut.register('CommandOrControl+Shift+I', () => {
+        const focusedWindow = BrowserWindow.getFocusedWindow();
+        if (focusedWindow) {
+            focusedWindow.webContents.toggleDevTools();
+        }
+    });
     ipcMain.on("closeWindow", () => {
         if (welcomeWindow) welcomeWindow.close();
         if (mainWindow) mainWindow.close();
@@ -88,6 +100,15 @@ app.whenReady().then(() => {
             welcomeWindow.webContents.send('returnOnFileNotFoundErrorToWelcome');
         });
     });
+
+    ipcMain.on("returnOnDataSourceMissing", (event, data) => {
+        if (mainWindow) mainWindow.close();
+        welcomeWindow = createWelcomeWindow('updatedatasource');
+        welcomeWindow.webContents.on('did-finish-load', () => {
+            welcomeWindow.webContents.send('returnToDataSourceMissing', { data });
+        });
+    });
+    
 
     ipcMain.on("returnBackToWelcomeScreen", () => {
         if (mainWindow) mainWindow.close();

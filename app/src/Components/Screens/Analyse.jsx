@@ -1,18 +1,17 @@
-import { Flex, Box, Divider, Center } from "@chakra-ui/react"
-import { useDispatch, useSelector } from 'react-redux';
-import {  useToast } from '@chakra-ui/react'
-import { useNavigate, useParams } from "react-router-dom";
-import { useEffect, useRef, useState } from "react";
-import StatusBar from "../Container/StatusBar";
-import PreviewTab from "../Container/PreviewTab";
-import { fetchData } from "../lib/analyse";
-import HeaderTab from "../Container/HeaderTab";
-import EntityTab from "../Container/EntityTab";
-import EntitySandBox from "../Container/EntitySandBox";
-import ModalBox from "../Elements/ModalBox";
-import { setStoreData } from "../../redux/actions/storeActions";
+import { Box, Center, Divider, Flex, useToast } from "@chakra-ui/react";
 import _ from 'lodash';
+import { useEffect, useRef, useState } from "react";
+import { useDispatch, useSelector } from 'react-redux';
+import { useNavigate } from "react-router-dom";
+import { setStoreData } from "../../redux/actions/storeActions";
+import EntitySandBox from "../Container/EntitySandBox";
+import EntityTab from "../Container/EntityTab";
+import HeaderTab from "../Container/HeaderTab";
 import NavBar from "../Container/NavBar";
+import PreviewTab from "../Container/PreviewTab";
+import StatusBar from "../Container/StatusBar";
+import ModalBox from "../Elements/ModalBox";
+import { fetchData } from "../lib/analyse";
 
 function Analyse() {
     const storeData = useSelector((state) => state.storeData)
@@ -26,7 +25,6 @@ function Analyse() {
     const [current, setCurrent] = useState({})
     const [modalElement, setModalElement] = useState(null);
     const [modalSize, setModalSize] = useState('lg');
-
     const testConnection = async () => {
         const state = await window.settings.testConnection();
         setDbStatus(state)
@@ -39,6 +37,7 @@ function Analyse() {
                     localStorage.setItem('currentProject', data.path)
                     const sata = await window.electron.loadFromBuffer(data.path); 
                     window.electron.saveProject(sata, localStorage.getItem('currentProject'))
+                    sata["projectTitle"] = window.electron.getProjectName(data.path)
                     dispatch(setStoreData(sata));
                 })
             } catch (error) {
@@ -57,7 +56,7 @@ function Analyse() {
         return () => {
             window.ipcRenderer.removeAllListeners('openWithFilePath');
         };
-    }, []);
+    }, [dispatch, toast]);
 
     const prevStoreDataRef = useRef();
 

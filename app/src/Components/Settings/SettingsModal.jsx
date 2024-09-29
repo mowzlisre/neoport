@@ -1,7 +1,6 @@
-import { Box, Button, Checkbox, Divider, Flex, Heading, Input, InputGroup, InputLeftAddon, InputRightElement, Spinner, Text, useToast } from '@chakra-ui/react';
+import { Box, Button, Checkbox, Divider, Flex, Heading, Input, InputGroup, InputLeftAddon, InputRightElement, Spinner, Text } from '@chakra-ui/react';
 import React, { useEffect, useState } from 'react';
 import { FcAcceptDatabase, FcDataEncryption, FcDataSheet, FcDatabase, FcDeleteDatabase, FcKey, FcLink, FcMindMap } from 'react-icons/fc';
-import { useDispatch } from 'react-redux';
 import { setStoreData } from '../../redux/actions/storeActions';
 import { defaultConf } from '../lib/conf';
 
@@ -11,10 +10,7 @@ function SettingsModal({ dbStatus, setDbStatus, storeData, closeModal }) {
     const [isTesting, setIsTesting] = useState(false)
     const [pref, setPref] = useState(defaultConf)
     const [title, setTitle] = useState(storeData.projectTitle || '')
-    const toast = useToast()
-    const id = '000'
-    
-    const checkForExisting = window.electron.checkForExisting
+    const [oldTitle, setOldTitle] = useState(storeData.projectTitle || '')
     const [fileExists, setFileExists] = useState(false)
 
     const testConnection = async () => {
@@ -72,31 +68,29 @@ function SettingsModal({ dbStatus, setDbStatus, storeData, closeModal }) {
     }, [pref])
 
     const handleDataSourcePref = (e, val) => {
-        if(e === 'projectTitle'){
-            const title = val.trim()
-            const exists = checkForExisting(title)
-            console.log(title, exists)
-            if (title !== ''){
-                    setFileExists(exists)
-                    setTitle(title)
-                    if(exists === true && title !== storeData['projectTitle']){
-                        if (!toast.isActive(id)) {
-                            toast({
-                                title: 'Project already exists',
-                                status: 'error',
-                                duration: 2000,
-                            })
-                        }
-                    }
-            } else{
-                setTitle('')
-                setFileExists(true)
-            }
-        } else{
-            storeData[e] = val
+        storeData[e] = val
+        setStoreData(storeData)
+        window.electron.saveProject(storeData, localStorage.getItem("currentProject"));
+    }
+
+    const renameProject = async(projectTitle, oldTitle) => {
+        await window.electron.renameProject(localStorage.getItem('currentProject'), projectTitle)
+        .then((result) => {
+            localStorage.setItem('currentProject', result.newPath)
+            storeData["projectTitle"] = projectTitle
             setStoreData(storeData)
-            window.electron.saveProject(storeData, localStorage.getItem("currentProject"));
-        }
+        })
+        .catch((error) => {
+            if(projectTitle !== oldTitle){
+                renameProject(oldTitle, oldTitle)
+            }
+        })
+    }
+
+    const handleProjectNameChange = (e) => {
+        const projectTitle = e.target.value
+        setTitle(projectTitle)
+        renameProject(projectTitle, oldTitle)
     }
 
     return (
@@ -113,7 +107,7 @@ function SettingsModal({ dbStatus, setDbStatus, storeData, closeModal }) {
                 </Box>
                 <Box gap={3} justifyContent={"left"} px={3}>
                     <Flex mt={3} flexDirection={'column'}>
-                        <Input value={title} onChange={(e) => handleDataSourcePref("projectTitle", e.target.value)} isInvalid={fileExists} ></Input>
+                        <Input value={title} onChange={handleProjectNameChange} isInvalid={fileExists} ></Input>
                     </Flex>
                     <Flex mt={3} flexDirection={'column'}>
                         <Checkbox defaultChecked={storeData["headers"]} onChange={() => handleDataSourcePref("headers", !storeData["headers"])}><Text ml={2}>Has Headers</Text></Checkbox>
