@@ -38,7 +38,7 @@ const PreviewTab = ({ storeData, columns }) => {
                                                 >
                                                     <div>
                                                         <Text fontSize={13}>{item}</Text>
-                                                        <Flex gap={2}>
+                                                        {/* <Flex gap={2}>
                                                             <Select
                                                                 bg={"white"}
                                                                 size={'xs'}
@@ -58,7 +58,7 @@ const PreviewTab = ({ storeData, columns }) => {
                                                                 <option value='ByteArray'>ByteArray</option>
                                                             </Select>
                                                             {storeData.parseDataTypes === true && storeData.dataTypes[item].abs !== true && <Box my={'auto'}><MdInfo fontSize={16} /></Box>}
-                                                        </Flex>
+                                                        </Flex> */}
                                                     </div>
                                                 </Tooltip>
                                             </Th>

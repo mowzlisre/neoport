@@ -26,7 +26,12 @@ const UpdateDataSource = () => {
 
     useEffect(() => {
         window.ipcRenderer.on('returnToDataSourceMissing', async(event, data) => {
-            console.log(data)
+            toast({
+                title: <Text fontSize={'sm'}>Data Source could not be found</Text>,
+                status: "warning",
+                duration: 3000,
+                variant: "subtle"
+            });
             const sata = await window.electron.loadFromBuffer(data.data.path); 
             sata["filePath"] = null
             sata["fileName"] = null
