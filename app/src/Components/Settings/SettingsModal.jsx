@@ -110,10 +110,10 @@ function SettingsModal({ dbStatus, setDbStatus, storeData, closeModal }) {
                         <Input value={title} onChange={handleProjectNameChange} isInvalid={fileExists} ></Input>
                     </Flex>
                     <Flex mt={3} flexDirection={'column'}>
-                        <Checkbox defaultChecked={storeData["headers"]} onChange={() => handleDataSourcePref("headers", !storeData["headers"])}><Text ml={2}>Has Headers</Text></Checkbox>
+                        <Checkbox defaultChecked={storeData["headers"]} onChange={() => handleDataSourcePref("headers", !storeData["headers"])}><Text fontSize={14} ml={1}>Has Headers</Text></Checkbox>
                     </Flex>
                     <Flex mt={3} flexDirection={'column'}>
-                        <Checkbox defaultChecked={storeData["parseDataTypes"]} onChange={() => handleDataSourcePref("parseDataTypes", !storeData["parseDataTypes"])}><Text ml={2}>Advanced Parsing</Text></Checkbox>
+                        <Checkbox defaultChecked={storeData["parseDataTypes"]} onChange={() => handleDataSourcePref("parseDataTypes", !storeData["parseDataTypes"])}><Text fontSize={14} ml={1}>Advanced Parsing</Text></Checkbox>
                         <Text fontSize={'xs'}>Recommended if the data source has Lists (Arrays) and Maps (Objects) </Text>
                     </Flex>
                 </Box>

@@ -1,6 +1,7 @@
 import { Avatar, Box, Button, Flex, Tag, Text, useToast } from "@chakra-ui/react";
 import { FaPlus } from "react-icons/fa6";
 import { validateProjectData } from "../lib/conf";
+import { generateCypherQuery } from "../lib/cypher";
 
 const EntityTab = ({storeData, current, setCurrent}) => {
     const toast = useToast()
@@ -9,7 +10,8 @@ const EntityTab = ({storeData, current, setCurrent}) => {
             attributes: {},
             type: "node",
             index: [],
-            name: null
+            name: null,
+            merge: false
         })
     }
 
@@ -18,6 +20,7 @@ const EntityTab = ({storeData, current, setCurrent}) => {
             attributes: {},
             type: "relationships",
             name: null,
+            merge: false
         })
     }
 
@@ -29,6 +32,7 @@ const EntityTab = ({storeData, current, setCurrent}) => {
                 status: "warning", duration: 3000, variant: "subtle"
             });
         } else{
+            console.log(generateCypherQuery(storeData))
             console.log("Ready for ETL")
         }
     }
