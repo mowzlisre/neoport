@@ -32,6 +32,7 @@ const EntityTab = ({storeData, current, setCurrent}) => {
                 status: "warning", duration: 3000, variant: "subtle"
             });
         } else{
+            console.log(storeData)
             console.log(generateCypherQuery(storeData))
             console.log("Ready for ETL")
         }

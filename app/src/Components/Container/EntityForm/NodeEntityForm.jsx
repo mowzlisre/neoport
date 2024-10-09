@@ -13,7 +13,7 @@ const NodeEntityForm = ({ current, setCurrent, columns, saveEntity, cancelSandBo
     
     useEffect(() => {
         setKey(current.name)
-    }, [current.name])
+    }, [])
 
     const handleEntityNameChange = (e) => {
         const value = e.target.value.trim();
@@ -142,7 +142,7 @@ const NodeEntityForm = ({ current, setCurrent, columns, saveEntity, cancelSandBo
                 <Divider />
                 <Flex px={5} py={3}>
                     <Checkbox isChecked={current.merge} onChange={handleMergeToggle}>
-                        <Text fontSize="small">Merge Nodes (Use is node is category or collection)</Text>
+                        <Text fontSize="small">Merge Nodes (Use if node is category or collection)</Text>
                     </Checkbox>
                 </Flex>
                 <Divider />

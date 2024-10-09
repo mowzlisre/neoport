@@ -60,10 +60,12 @@ const EntitySandBox = ({ storeData, current, setCurrent, columns, openSetModal, 
 
         if (current.type === "node") {
             const newNodeData = { ...current };
+            console.log(newNodeData, key)
             const updatedNodes = { ...storeData.nodes };
             if(key !== null){
                 updatedNodes[current.name] = newNodeData;
                 if(key !== current.name){
+                    console.log("Deleting old")
                     delete updatedNodes[key]
                 }
             } else{

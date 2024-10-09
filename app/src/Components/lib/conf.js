@@ -100,10 +100,6 @@ export function validateProjectData(projectData) {
     return { valid: false, error: 'Node keys cannot be empty.' };
   }
 
-  if (relationshipKeys.length === 0) {
-    return { valid: false, error: 'Relationship keys cannot be empty.' };
-  }
-
   for (const relKey of relationshipKeys) {
     const relationship = relationships[relKey];
     const { node1, node2, name } = relationship;
