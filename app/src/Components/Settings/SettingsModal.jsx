@@ -8,15 +8,14 @@ function SettingsModal({ dbStatus, setDbStatus, storeData, closeModal }) {
     const [show, setShow] = useState(false)
     const handleClick = () => setShow(!show)
     const [isTesting, setIsTesting] = useState(false)
-    const [pref, setPref] = useState(defaultConf)
+    const [pref, setPref] = useState(storeData.db)
     const [title, setTitle] = useState(storeData.projectTitle || '')
     const [oldTitle, setOldTitle] = useState(storeData.projectTitle || '')
     const [fileExists, setFileExists] = useState(false)
 
     const testConnection = async () => {
         setIsTesting(true)
-        await window.settings.setPref(pref)
-        const status = await window.settings.testConnection();
+        const status = await window.settings.testConnection(pref);
         setDbStatus(status)
         setIsTesting(false)
     }
