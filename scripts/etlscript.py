@@ -1,4 +1,4 @@
-import sys, json, os, csv
+import sys, json, os, csv, time, random
 from neo4j import GraphDatabase, basic_auth
 from neo4j.exceptions import ServiceUnavailable, AuthError, Neo4jError
 from pprint import pprint
@@ -77,5 +77,45 @@ def main():
     except json.JSONDecodeError as e:
         print(f"Error decoding JSON: {e}")
 
+def generate_random_step_data():
+    steps = [
+        "Starting ETL pipeline",
+        "Analysing nodes and relationships",
+        "Generating Cypher queries",
+        "Exporting data to Neo4j Database"
+    ]
+    statuses = ["in-progress", "completed"]
+    
+    # Simulate progress
+    for step in steps:
+        # Generate random percentage progress
+        percentage = 0
+        while percentage < 100:
+            # Increment percentage randomly
+            percentage += random.randint(5, 20)
+            percentage = min(percentage, 100)  # Cap at 100%
+
+            # Determine status based on percentage
+            status = "in-progress" if percentage < 100 else "completed"
+            completed = percentage == 100
+
+            # Create the data payload
+            data = {
+                "stepName": step,
+                "status": status,
+                "percentage": percentage,
+                "completed": completed
+            }
+
+            # Convert to JSON string
+            json_data = json.dumps(data)
+
+            # Print the JSON data to stdout (which Electron reads)
+            print(json_data)
+            sys.stdout.flush()  # Ensure the output is flushed and sent immediately
+
+            # Sleep for a random time between 1 and 3 seconds to simulate process time
+            time.sleep(random.uniform(1, 3))
+
 if __name__ == '__main__':
-    main()
+    generate_random_step_data()

@@ -2,6 +2,7 @@ import { Avatar, Box, Button, Flex, Tag, Text, useToast } from "@chakra-ui/react
 import { FaPlus } from "react-icons/fa6";
 import { validateProjectData } from "../lib/conf";
 import ETLModal from "../Elements/ETLModal";
+import { useEffect } from "react";
 
 const EntityTab = ({storeData, setCurrent, openSetModal, closeModal}) => {
     const toast = useToast();
@@ -36,9 +37,13 @@ const EntityTab = ({storeData, setCurrent, openSetModal, closeModal}) => {
                 variant: "subtle"
             });
         } else {
-            openSetModal(() => <ETLModal />, "lg");
+            openSetModal(() => <ETLModal {...{closeModal}}/>, "2xl");
         }
     };
+
+    useEffect(() => {
+        openSetModal(() => <ETLModal {...{closeModal}} />, "2xl");
+    }, [])
 
     return (
         <Flex p={1} gap={2} direction={"column"}>

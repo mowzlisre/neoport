@@ -60,26 +60,35 @@ const createMainWindow = (data) => {
         mainWindow = null;
     });
 
+    let pythonProcess; 
+    
     ipcMain.on('python-start', (event, args) => {
-        console.log(args)
         const scriptPath = path.join(__dirname, `./scripts/${args[0]}.py`);
     
-        const pythonProcess = spawn('python3', [scriptPath, ...args]);
+        pythonProcess = spawn('python3', [scriptPath, ...args]);
     
         pythonProcess.stdout.on('data', (data) => {
-            console.log(`Python stdout: ${data}`);
             mainWindow.webContents.send('python-output', data.toString());
         });
     
         pythonProcess.stderr.on('data', (data) => {
-            console.error(`Python stderr: ${data}`);
             mainWindow.webContents.send('python-error', data.toString());
         });
     
         pythonProcess.on('close', (code) => {
-            console.log(`Python process exited with code ${code}`);
             mainWindow.webContents.send('python-exit', code);
         });
+    });
+
+    ipcMain.on('python-interrupt', (event) => {
+        if (pythonProcess) {
+            pythonProcess.kill('SIGINT'); 
+            console.log('Python process has been interrupted.');
+            event.sender.send('python-interrupted', 'ETL was interuptted');
+            pythonProcess = null;
+        } else {
+            event.sender.send('python-interrupted', 'No process was running');
+        }
     });
     
 
