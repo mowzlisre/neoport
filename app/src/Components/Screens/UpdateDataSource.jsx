@@ -25,7 +25,7 @@ const UpdateDataSource = () => {
     const [existingProject, setExistingProject] = useState(false)
 
     useEffect(() => {
-        window.ipcRenderer.on('returnToDataSourceMissing', async(event, data) => {
+        window.ipcRenderer.on('returnToDataSourceMissing', async(data) => {
             toast({
                 title: <Text fontSize={'sm'}>Data Source could not be found</Text>,
                 status: "warning",

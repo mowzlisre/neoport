@@ -33,7 +33,7 @@ function Analyse() {
     useEffect(() => {
         const fetchDataFromBuffer = async () => {
             try {
-                window.ipcRenderer.on('openWithFilePath', async (event, data) => {
+                window.ipcRenderer.on('openWithFilePath', async (data) => {
                     localStorage.setItem('currentProject', data.path)
                     const sata = await window.electron.loadFromBuffer(data.path); 
                     window.electron.saveProject(sata, localStorage.getItem('currentProject'))
@@ -98,7 +98,7 @@ function Analyse() {
                     <Divider orientation='vertical' bg={"aliceblue"} />
                 </Center>
                 <Box p={1} width={"25%"}>
-                    <EntityTab {...{storeData, current, setCurrent}} />
+                    <EntityTab {...{storeData, current, setCurrent, openSetModal, closeModal}} />
                 </Box>
             </Flex>
             <Divider />

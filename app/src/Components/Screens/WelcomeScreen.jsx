@@ -28,7 +28,7 @@ const WelcomeScreen = () => {
     }, [])
 
     useEffect(() => {
-        window.ipcRenderer.on('returnOnFileNotFoundErrorToWelcome', (event, data) => {
+        window.ipcRenderer.on('returnOnFileNotFoundErrorToWelcome', (data) => {
             toast({
                 title: <Text fontSize={'sm'}>File not found</Text>, status: "error", duration: 3000, variant: "subtle"
             });

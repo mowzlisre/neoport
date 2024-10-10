@@ -2,6 +2,7 @@ const { app, BrowserWindow, ipcMain, Menu, globalShortcut } = require("electron"
 const path = require("path");
 let welcomeWindow;
 let mainWindow;
+const { spawn } = require('child_process');
 
 const route = "http://localhost:3000/#";
 
@@ -58,6 +59,29 @@ const createMainWindow = (data) => {
     mainWindow.on('closed', () => {
         mainWindow = null;
     });
+
+    ipcMain.on('python-start', (event, args) => {
+        console.log(args)
+        const scriptPath = path.join(__dirname, `./scripts/${args[0]}.py`);
+    
+        const pythonProcess = spawn('python3', [scriptPath, ...args]);
+    
+        pythonProcess.stdout.on('data', (data) => {
+            console.log(`Python stdout: ${data}`);
+            mainWindow.webContents.send('python-output', data.toString());
+        });
+    
+        pythonProcess.stderr.on('data', (data) => {
+            console.error(`Python stderr: ${data}`);
+            mainWindow.webContents.send('python-error', data.toString());
+        });
+    
+        pythonProcess.on('close', (code) => {
+            console.log(`Python process exited with code ${code}`);
+            mainWindow.webContents.send('python-exit', code);
+        });
+    });
+    
 
     return mainWindow;
 };

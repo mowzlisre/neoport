@@ -53,7 +53,7 @@ def pullDataSource(path):
         print(f"An error occurred while reading the CSV file: {e}")
         return None
 
-def main():
+def main1():
     config = json.loads(sys.stdin.read())
     print("hello")
     if config["db"]["URI"] == '' or config["db"]["username"] == '' or config["db"]["password"] == '':
@@ -65,15 +65,17 @@ def main():
         # data = pullDataSource(config["filePath"])
         # print(len(data))
 
-
-
-
-
-
-
-
     else:
         print(connection)
+
+def main():
+    try:
+        # Read the arguments (sys.argv[0] is the script name, so start from index 1)
+        args = sys.argv[1:]
+        print(args[0])
+
+    except json.JSONDecodeError as e:
+        print(f"Error decoding JSON: {e}")
 
 if __name__ == '__main__':
     main()

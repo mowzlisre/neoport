@@ -1,10 +1,11 @@
 import { Avatar, Box, Button, Flex, Tag, Text, useToast } from "@chakra-ui/react";
 import { FaPlus } from "react-icons/fa6";
 import { validateProjectData } from "../lib/conf";
-import { generateCypherQuery } from "../lib/cypher";
+import ETLModal from "../Elements/ETLModal";
 
-const EntityTab = ({storeData, current, setCurrent}) => {
-    const toast = useToast()
+const EntityTab = ({storeData, setCurrent, openSetModal, closeModal}) => {
+    const toast = useToast();
+
     const handleAddNewNode = () => {
         setCurrent({
             attributes: {},
@@ -12,8 +13,8 @@ const EntityTab = ({storeData, current, setCurrent}) => {
             index: [],
             name: null,
             merge: false
-        })
-    }
+        });
+    };
 
     const handleAddNewRelationship = () => {
         setCurrent({
@@ -21,23 +22,23 @@ const EntityTab = ({storeData, current, setCurrent}) => {
             type: "relationships",
             name: null,
             merge: false
-        })
-    }
+        });
+    };
+
 
     const transformAndExport = () => {
-        let result = validateProjectData(storeData)
-        if(!result.valid){
+        const result = validateProjectData(storeData);
+        if (!result.valid) {
             toast({
                 title: <Text fontSize={'sm'}>{result.error}</Text>,
-                status: "warning", duration: 3000, variant: "subtle"
+                status: "warning",
+                duration: 3000,
+                variant: "subtle"
             });
-        } else{
-            console.log(storeData)
-            console.log(generateCypherQuery(storeData))
-            console.log("Ready for ETL")
+        } else {
+            openSetModal(() => <ETLModal />, "lg");
         }
-    }
-
+    };
 
     return (
         <Flex p={1} gap={2} direction={"column"}>
@@ -48,21 +49,19 @@ const EntityTab = ({storeData, current, setCurrent}) => {
                         <Box role="button" onClick={handleAddNewNode}>
                             <Avatar icon={<FaPlus fontSize='1rem' />} />
                         </Box>
-                        {
-                            Object.keys(storeData.nodes)?.map((item) => (
-                                <Box key={item} role="button" onClick={() => {
-                                        let dat = storeData.nodes[item]
-                                        dat["type"] = "node"
-                                        dat["name"] = item
-                                        setCurrent(dat)
-                                    }}>
-                                    <Avatar 
-                                        name={(item.trim() === '' || storeData.nodes[item].name.trim() === '') ? "!" : item} 
-                                        backgroundColor={(item.trim() === '' || storeData.nodes[item].name.trim() === '') ? "red.500" : undefined}>
-                                    </Avatar>
-                                </Box>
-                            ))
-                        }
+                        {Object.keys(storeData.nodes)?.map((item) => (
+                            <Box key={item} role="button" onClick={() => {
+                                    const dat = storeData.nodes[item];
+                                    dat["type"] = "node";
+                                    dat["name"] = item;
+                                    setCurrent(dat);
+                                }}>
+                                <Avatar 
+                                    name={(item.trim() === '' || storeData.nodes[item].name.trim() === '') ? "!" : item} 
+                                    backgroundColor={(item.trim() === '' || storeData.nodes[item].name.trim() === '') ? "red.500" : undefined}>
+                                </Avatar>
+                            </Box>
+                        ))}
                     </Flex>
                 </Box>
             </Box>
@@ -75,32 +74,30 @@ const EntityTab = ({storeData, current, setCurrent}) => {
                                 <FaPlus fontSize={10} />
                             </Tag>
                         </Box>
-                        {
-                            Object.keys(storeData.relationships).map((item, index) => (
-                                <Box role="button" key={index} onClick={() => {
-                                        let dat = storeData.relationships[item]
-                                        dat["type"] = "relationships"
-                                        dat["name"] = item
-                                        setCurrent(dat)
-                                    }}>
-                                        {storeData.relationships[item].node1 !== '' && storeData.relationships[item].node2 !== '' ? (
-                                            <Tag bg="gray.400" color="white" minWidth="70px" justifyContent="center" fontSize="xs" fontWeight="bold">
-                                                <Text>{item}</Text>
-                                            </Tag>
-                                        ) : <Tag bg="red.500" color="white" minWidth="70px" justifyContent="center" fontSize="xs" fontWeight="bold">
-                                                <Text>! Error</Text>
-                                            </Tag>
-                                        }
-
-                                </Box>
-                            ))
-                        }
+                        {Object.keys(storeData.relationships).map((item, index) => (
+                            <Box role="button" key={index} onClick={() => {
+                                    const dat = storeData.relationships[item];
+                                    dat["type"] = "relationships";
+                                    dat["name"] = item;
+                                    setCurrent(dat);
+                                }}>
+                                {storeData.relationships[item].node1 !== '' && storeData.relationships[item].node2 !== '' ? (
+                                    <Tag bg="gray.400" color="white" minWidth="70px" justifyContent="center" fontSize="xs" fontWeight="bold">
+                                        <Text>{item}</Text>
+                                    </Tag>
+                                ) : (
+                                    <Tag bg="red.500" color="white" minWidth="70px" justifyContent="center" fontSize="xs" fontWeight="bold">
+                                        <Text>! Error</Text>
+                                    </Tag>
+                                )}
+                            </Box>
+                        ))}
                     </Flex>
                 </Box>
             </Box>
             <Button fontSize={'sm'} onClick={transformAndExport}>Transform and Export to DB</Button>
         </Flex>
-    )
-}
+    );
+};
 
-export default EntityTab
+export default EntityTab;

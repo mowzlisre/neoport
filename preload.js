@@ -10,7 +10,9 @@ contextBridge.exposeInMainWorld( 'ipcRenderer', {
     send: (channel, data) => {
       ipcRenderer.send(channel, data);
     },
-    on: (channel, listener) => ipcRenderer.on(channel, listener),
+    on: (channel, listener) => {
+        ipcRenderer.on(channel, (event, args) => listener(args));
+    },
     removeAllListeners: (channel) => ipcRenderer.removeAllListeners(channel)
   }
 );
