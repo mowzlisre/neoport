@@ -8,7 +8,7 @@ const ETLModal = ({closeModal}) => {
         steps: [
             { name: "Starting ETL pipeline", status: "pending", completed: false, percentage: 0 },
             { name: "Analysing nodes and relationships", status: "pending", completed: false, percentage: 0 },
-            { name: "Generating Cypher queries", status: "pending", completed: false, percentage: 0 },
+            { name: "Transforming Entities", status: "pending", completed: false, percentage: 0 },
             { name: "Exporting data to Neo4j Database", status: "pending", completed: false, percentage: 0 }
         ],
         currentStep: "Starting ETL pipeline",

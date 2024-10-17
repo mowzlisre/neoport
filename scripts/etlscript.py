@@ -1,121 +1,188 @@
-import sys, json, os, csv, time, random
+import sys, json, os
 from neo4j import GraphDatabase, basic_auth
-from neo4j.exceptions import ServiceUnavailable, AuthError, Neo4jError
-from pprint import pprint
+import pandas as pd
 
-def pingDb(uri, username, password):
-    driver = GraphDatabase.driver(uri, auth=basic_auth(username, password))
 
+def printStatus(step_name, sub_process_name, sub_process_status, sub_process_completed, percentage=None):
+    """Utility function to print structured status updates."""
+    data = {
+        "stepName": step_name,
+        "subProcessName": sub_process_name,
+        "subProcessStatus": sub_process_status,
+        "subProcessCompleted": sub_process_completed
+    }
+    if percentage is not None:
+        data["percentage"] = percentage
+    print(json.dumps(data))
+    sys.stdout.flush() 
+
+
+def ValidateProject(path):
+    printStatus("Starting ETL pipeline", "Validate Project", "in-progress", False, 0)
+    with open(path, 'r') as file:
+        printStatus("Starting ETL pipeline", "Validate Project", "completed", True, 100)
+        return json.load(file)
+
+
+def VerifyDataSource(path):
+    printStatus("Starting ETL pipeline", "Verifying Data Source", "in-progress", False, 0)
     try:
+        df = pd.read_csv(path)
+        printStatus("Starting ETL pipeline", "Verifying Data Source", "completed", True, 100)
+        return df
+    except Exception as e:
+        printStatus("Starting ETL pipeline", "Verifying Data Source", "error", False, 0)
+        return None
+
+
+def EstablishNeo4jConnection(db):
+    printStatus("Starting ETL pipeline", "Establishing connection with Neo4j Server", "in-progress", False, 0)
+    try:
+        driver = GraphDatabase.driver(db["URI"], auth=basic_auth(db["username"], db["password"]))
         with driver.session() as session:
-            result = session.run("RETURN 1 AS status")
-            status = result.single()["status"]
-            if status == 1:
-                print("Neo4j database is up and running.")
-                return True
-    except AuthError as e:
-        print(f"Authentication failed: {e}")
-        return False
-    except ServiceUnavailable as e:
-        print(f"Database service is unavailable: {e}")
-        return False
-    except Neo4jError as e:
-        print(f"Neo4j error: {e}")
-        return False
+            session.run("RETURN 1")
+        printStatus("Starting ETL pipeline", "Establishing connection with Neo4j Server", "completed", True, 100)
+        return driver
     except Exception as e:
-        print(f"An error occurred: {e}")
-        return False
-    finally:
-        driver.close()
-
-    print("Neo4j database is down or the query failed.")
-    return False
-
-def pullDataSource(path):
-    if not os.path.isfile(path):
-        print(f"Error: {path} is not a valid file.")
-        return None
-    
-    if not path.lower().endswith('.csv'):
-        print(f"Error: {path} is not a CSV file.")
-        return None
-    
-    data = []
-    
-    # Parse the CSV file and store its content in a dictionary
-    try:
-        with open(path, mode='r', newline='', encoding='utf-8') as file:
-            reader = csv.DictReader(file)
-            for row in reader:
-                data.append(dict(row))
-        return data
-    except Exception as e:
-        print(f"An error occurred while reading the CSV file: {e}")
+        print(e)
+        printStatus("Starting ETL pipeline", "Establishing connection with Neo4j Server", "error", False, 0)
         return None
 
-def main1():
-    config = json.loads(sys.stdin.read())
-    print("hello")
-    if config["db"]["URI"] == '' or config["db"]["username"] == '' or config["db"]["password"] == '':
-        return "Improper credentials configuration for Neo4j"
 
-    connection = pingDb(config["db"]["URI"], config["db"]["username"], config["db"]["password"])
-    if connection != None:
-        print(config["filePath"])
-        # data = pullDataSource(config["filePath"])
-        # print(len(data))
+def ETLPipeline(path):
+    config = ValidateProject(path)
+    data_df = VerifyDataSource(config["filePath"])
+    driver = EstablishNeo4jConnection(config["db"])
+    return config, data_df, driver
 
+
+def CheckNodesAndRelationship(config):
+    printStatus("Extracting nodes and relationships", "", "in-progress", False, 0)
+    nodes = config["nodes"]
+    relationships = config["relationships"]
+    if len(nodes) != 0 and len(relationships) != 0:
+        printStatus("Extracting nodes and relationships", "", "completed", True, 100)
+        return nodes, relationships
     else:
-        print(connection)
+        printStatus("Extracting nodes and relationships", "", "error", False, 0)
 
-def main():
+
+def BundleNodes(nodes, data_df):
+    printStatus("Transforming Entities", "Bundling Nodes", "in-progress", False, 0)
+    nodes_sum = 0
+    nodes_df = {}
     try:
-        # Read the arguments (sys.argv[0] is the script name, so start from index 1)
-        args = sys.argv[1:]
-        print(args[0])
+        for node in nodes:
+            indexing_column_key = nodes[node]["attributes"][nodes[node]["index"][0]]["key"]
+            indexing_column = nodes[node]["attributes"][nodes[node]["index"][0]]["value"]
+            attributes = [nodes[node]["attributes"][i]["value"] for i in nodes[node]["attributes"]]
+            new_column_names = {nodes[node]["attributes"][i]["value"]: nodes[node]["attributes"][i]["key"] 
+                                for i in nodes[node]["attributes"]}
+            unique_values = data_df[attributes].drop_duplicates(subset=[indexing_column])
+            unique_values.rename(columns=new_column_names, inplace=True)
+            unique_values.instrument_name = indexing_column_key
+            nodes_sum += len(unique_values)
+            nodes_df[nodes[node]["name"]] = unique_values
+        printStatus("Transforming Entities", "Bundling Nodes", "completed", True, 100)
+        return nodes_df
+    except Exception as e:
+        printStatus("Transforming Entities", "Bundling Nodes", "error", False, 0)
+        print(f"Error: {e}")
+        return None
 
-    except json.JSONDecodeError as e:
-        print(f"Error decoding JSON: {e}")
 
-def generate_random_step_data():
-    steps = [
-        "Starting ETL pipeline",
-        "Analysing nodes and relationships",
-        "Generating Cypher queries",
-        "Exporting data to Neo4j Database"
-    ]
-    statuses = ["in-progress", "completed"]
+def BundleRelationships(relationships, nodes_df, data_df):    
+    printStatus("Transforming Entities", "Bundling Relationships", "in-progress", False, 0)
+    try:
+        rel_df = {}
+        for rel in relationships:
+            attributes = [relationships[rel]["attributes"][i] for i in relationships[rel]["attributes"]]
+            source_, target_ = [relationships[rel]["node1"], relationships[rel]["node2"]]
+            source = nodes[source_]["attributes"][nodes[source_]["index"][0]]["value"]
+            target = nodes[target_]["attributes"][nodes[target_]["index"][0]]["value"]
+            temp = data_df[[source, target]].drop_duplicates(subset=[source, target])
+            temp = temp.rename(columns={source: 'SOURCE_NODE', target: 'TARGET_NODE'})
+            for attr in attributes:
+                attr_value_column = attr['value']
+                attr_key_column = attr['key']   
+                temp[attr_key_column] = data_df[attr_value_column]
+            rel_df[relationships[rel]["name"]] = temp
+        printStatus("Transforming Entities", "Bundling Relationships", "completed", True, 100)
+        return rel_df
+    except Exception as e:        
+        printStatus("Transforming Entities", "Bundling Relationships", "error", False, 0)
+        
+
+def TransformEntities(nodes, relationships, data_df):
+    nodes_df = BundleNodes(nodes, data_df)
+    rels_df = BundleRelationships(relationships, nodes_df, data_df)
+    return nodes_df, rels_df
+
+
+def CreateNodeIndexes(driver, nodes_df):
+    with driver.session() as session:
+        for instrument_name, df in nodes_df.items():
+            query = f"CREATE INDEX IF NOT EXISTS FOR (n:{instrument_name}) ON (n.{df.columns[0]});"
+            session.run(query)
+
+
+def ExportNodes(driver, nodes_df, batch_size=100):
+    with driver.session() as session:
+        for node, df in nodes_df.items():
+            columns = df.columns
+            total_rows = len(df)
+            for i in range(0, total_rows, batch_size):
+                batch = df.iloc[i:min(i + batch_size, total_rows)].to_dict(orient='records')
+                set_clause = ', '.join([f"n.{col} = row.{col}" for col in columns])
+                query = f"""
+                UNWIND $batch AS row
+                MERGE (n:{node} {{{columns[0]}: row.{columns[0]}}})
+                SET {set_clause}
+                """
+                session.run(query, batch=batch)
+
+
+def ExportRelationships(driver, relationships, rels_df, nodes_df, batch_size=100):
+    with driver.session() as session:
+        for rel in relationships:
+            rel_data = rels_df[rel]
+            node1 = relationships[rel]["node1"]
+            node2 = relationships[rel]["node2"]
     
-    # Simulate progress
-    for step in steps:
-        # Generate random percentage progress
-        percentage = 0
-        while percentage < 100:
-            # Increment percentage randomly
-            percentage += random.randint(5, 20)
-            percentage = min(percentage, 100)  # Cap at 100%
+            source_attr = nodes_df[node1].instrument_name
+            target_attr = nodes_df[node2].instrument_name
+    
+            rel_columns = [col for col in rel_data.columns if col not in ['SOURCE_NODE', 'TARGET_NODE']]
+            for i in range(0, len(rel_data), batch_size):
+                batch = rel_data.iloc[i:i + batch_size].to_dict(orient='records')
+                merge = "MERGE" if relationships[rel]["merge"] else "CREATE"
+                query = f"""
+                UNWIND $batch AS row
+                MATCH (n1:{node1} {{{source_attr}: row.SOURCE_NODE}})
+                MATCH (n2:{node2} {{{target_attr}: row.TARGET_NODE}})
+                {merge} (n1)-[r:{rel} {{"""
+    
+                query += ', '.join([f"{col}: row.{col}" for col in rel_columns])
+    
+                query += f"}}]->(n2)"
+                session.run(query, batch=batch)
 
-            # Determine status based on percentage
-            status = "in-progress" if percentage < 100 else "completed"
-            completed = percentage == 100
 
-            # Create the data payload
-            data = {
-                "stepName": step,
-                "status": status,
-                "percentage": percentage,
-                "completed": completed
-            }
+def ExportEntities(driver, relationships, nodes_df, rels_df, batch_size):
+    CreateNodeIndexes(driver, nodes_df)
+    ExportNodes(driver, nodes_df, batch_size=100)
+    ExportRelationships(driver, relationships, rels_df, nodes_df, batch_size=100)
 
-            # Convert to JSON string
-            json_data = json.dumps(data)
+if __name__ == "__main__":
+    args = sys.argv[1:]
+    path = args[0]
 
-            # Print the JSON data to stdout (which Electron reads)
-            print(json_data)
-            sys.stdout.flush()  # Ensure the output is flushed and sent immediately
+    path = '/home/achaarya/.neoport/Mowli.neoproj'
 
-            # Sleep for a random time between 1 and 3 seconds to simulate process time
-            time.sleep(random.uniform(1, 3))
+    config, data_df, driver = ETLPipeline(path)
+    nodes, relationships = CheckNodesAndRelationship(config)
+    nodes_df, rels_df = TransformEntities(nodes, relationships, data_df)
+    ExportEntities(driver, relationships, nodes_df, rels_df, 100)
 
-if __name__ == '__main__':
-    generate_random_step_data()
+
+
