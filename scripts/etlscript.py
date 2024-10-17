@@ -1,6 +1,23 @@
-import sys, json, os
+import sys, json, os, time
 from neo4j import GraphDatabase, basic_auth
 import pandas as pd
+
+# New: Variables to store counts and time
+start_time = time.time()
+total_nodes_created = 0
+total_relationships_created = 0
+
+def log_final_results():
+    """Logs the total time, nodes created, and relationships created."""
+    end_time = time.time()
+    total_time_taken = end_time - start_time
+    result = {
+        "stepName": "log",
+        "totalTimeTaken": total_time_taken,
+        "totalNodesCreated": total_nodes_created,
+        "totalRelationshipsCreated": total_relationships_created
+    }
+    print(json.dumps(result))
 
 
 def printStatus(step_name, sub_process_name, sub_process_status, sub_process_completed, percentage=None):
@@ -12,7 +29,7 @@ def printStatus(step_name, sub_process_name, sub_process_status, sub_process_com
         "subProcessCompleted": sub_process_completed
     }
     if percentage is not None:
-        data["percentage"] = percentage
+        data["percentage"] = percentage // 1
     print(json.dumps(data))
 
 
@@ -145,6 +162,7 @@ def CreateNodeIndexes(driver, nodes_df):
 
 
 def ExportNodes(driver, nodes, nodes_df, batch_size=100):
+    global total_nodes_created 
     total_rows = sum(len(df) for df in nodes_df.values())
     processed_rows = 0
 
@@ -163,8 +181,7 @@ def ExportNodes(driver, nodes, nodes_df, batch_size=100):
                 SET {set_clause}
                 """
                 session.run(query, batch=batch)
-
-                # Calculate percentage progress
+                total_nodes_created += len(batch)
                 processed_rows += len(batch)
                 percentage = (processed_rows / total_rows) * 100
                 printStatus("Exporting data to Neo4j Database", "Exporting Nodes", "in-progress", False, percentage)
@@ -173,6 +190,7 @@ def ExportNodes(driver, nodes, nodes_df, batch_size=100):
 
 
 def ExportRelationships(driver, relationships, rels_df, nodes_df, batch_size=100):
+    global total_relationships_created
     total_rels_rows = sum(len(rel_df) for rel_df in rels_df.values())
     processed_rels_rows = 0
 
@@ -181,10 +199,8 @@ def ExportRelationships(driver, relationships, rels_df, nodes_df, batch_size=100
             rel_data = rels_df[rel]
             node1 = relationships[rel]["node1"]
             node2 = relationships[rel]["node2"]
-
             source_attr = nodes_df[node1].instrument_name
             target_attr = nodes_df[node2].instrument_name
-
             rel_columns = [col for col in rel_data.columns if col not in ['SOURCE_NODE', 'TARGET_NODE']]
             for i in range(0, len(rel_data), batch_size):
                 batch = rel_data.iloc[i:i + batch_size].to_dict(orient='records')
@@ -194,13 +210,10 @@ def ExportRelationships(driver, relationships, rels_df, nodes_df, batch_size=100
                 MATCH (n1:{node1} {{{source_attr}: row.SOURCE_NODE}})
                 MATCH (n2:{node2} {{{target_attr}: row.TARGET_NODE}})
                 {merge} (n1)-[r:{rel} {{"""
-
                 query += ', '.join([f"{col}: row.{col}" for col in rel_columns])
-
                 query += f"}}]->(n2)"
                 session.run(query, batch=batch)
-
-                # Calculate percentage progress
+                total_relationships_created += len(batch)
                 processed_rels_rows += len(batch)
                 percentage = (processed_rels_rows / total_rels_rows) * 100
                 printStatus("Exporting data to Neo4j Database", "Exporting Relationships", "in-progress", False, percentage)
@@ -221,3 +234,4 @@ if __name__ == "__main__":
     nodes, relationships = CheckNodesAndRelationship(config)
     nodes_df, rels_df = TransformEntities(nodes, relationships, data_df)
     ExportEntities(driver, relationships, nodes_df, rels_df, 100)
+    log_final_results()

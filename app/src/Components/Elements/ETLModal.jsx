@@ -18,6 +18,7 @@ const ETLModal = ({ closeModal }) => {
     };
 
     const [etlStatus, setEtlStatus] = useState(defaultEtlStatus);
+    const [finalResults, setFinalResults] = useState(null); // State to store final ETL result (nodes, relationships, time)
     const toast = useToast();
     const [error, setError] = useState('');
 
@@ -36,7 +37,6 @@ const ETLModal = ({ closeModal }) => {
         });
 
         window.ipcRenderer.on('python-exit', (code) => {
-            console.log(`Python process exited with code: ${code}`);
         });
 
         window.ipcRenderer.on('python-interupted', (code) => {
@@ -66,9 +66,15 @@ const ETLModal = ({ closeModal }) => {
         });
     };
 
+    const closeETLModal = () => {
+        resetEtlStatus();
+        closeModal();
+    }
+
     const resetEtlStatus = () => {
         setEtlStatus(defaultEtlStatus);
         setEtlState(false);
+        setFinalResults(null); // Reset final results
     };
 
     const handlePythonOutput = (outputData) => {
@@ -76,30 +82,48 @@ const ETLModal = ({ closeModal }) => {
             const jsonDataArray = outputData.trim().split('\n'); 
             jsonDataArray.forEach(jsonStr => {
                 const parsedData = JSON.parse(jsonStr);
-                
-                setEtlStatus((prevStatus) => {
-                    const updatedSteps = prevStatus.steps.map((step) => {
-                        if (step.name === parsedData.stepName) {
-                            // Update step and subprocess if exists
-                            const updatedStep = {
-                                ...step,
-                                status: parsedData.subProcessName ? parsedData.subProcessStatus : parsedData.subProcessStatus || "in-progress",
-                                completed: parsedData.subProcessCompleted,
-                                percentage: parsedData.percentage || 0,
-                                subprocesses: parsedData.subProcessName ? updateSubprocesses(step.subprocesses, parsedData) : step.subprocesses
-                            };
-                            return updatedStep;
-                        }
-                        return step;
-                    });
 
-                    return {
-                        ...prevStatus,
-                        steps: updatedSteps,
-                        currentStep: parsedData.stepName,
-                        completed: updatedSteps.every((step) => step.completed)
-                    };
-                });
+                if (parsedData.totalTimeTaken) {
+                    const timeTaken = parsedData.totalTimeTaken < 1
+                        ? `${(parsedData.totalTimeTaken * 1000).toFixed(2)} ms`
+                        : `${parsedData.totalTimeTaken.toFixed(2)} seconds`;
+                    
+                    setFinalResults({
+                        timeTaken,
+                        nodesCreated: parsedData.totalNodesCreated,
+                        relationshipsCreated: parsedData.totalRelationshipsCreated
+                    });
+                    toast({
+                        title: <Text fontSize={'sm'}>ETL process successful</Text>,
+                        status: "success",
+                        duration: 3000,
+                        variant: "subtle"
+                    });
+                } else {
+                    setEtlStatus((prevStatus) => {
+                        const updatedSteps = prevStatus.steps.map((step) => {
+                            if (step.name === parsedData.stepName) {
+                                // Update step and subprocess if exists
+                                const updatedStep = {
+                                    ...step,
+                                    status: parsedData.subProcessName ? parsedData.subProcessStatus : parsedData.subProcessStatus || "in-progress",
+                                    completed: parsedData.subProcessCompleted,
+                                    percentage: parsedData.percentage || 0,
+                                    subprocesses: parsedData.subProcessName ? updateSubprocesses(step.subprocesses, parsedData) : step.subprocesses
+                                };
+                                return updatedStep;
+                            }
+                            return step;
+                        });
+
+                        return {
+                            ...prevStatus,
+                            steps: updatedSteps,
+                            currentStep: parsedData.stepName,
+                            completed: updatedSteps.every((step) => step.completed)
+                        };
+                    });
+                }
             });
         } catch (error) {
             console.error("Error parsing JSON data:", error);
@@ -141,7 +165,7 @@ const ETLModal = ({ closeModal }) => {
                 <Flex mt={5} direction={'column'} gap={2}>
                     {etlStatus.steps.map((step, index) => (
                         <Box key={index} ml={3}>
-                            <Flex gap={3} color={step.status === 'in-progress' ? 'black' : step.status === 'error' ? 'red' : 'gray'}>
+                            <Flex gap={3} color={step.status === 'in-progress' ? 'black' : step.status === 'error' ? 'red' : 'gray.700'}>
                                 <Text fontWeight={step.status === 'in-progress' ? 'bold' : 'normal'}>
                                     {step.name}
                                 </Text>
@@ -156,7 +180,7 @@ const ETLModal = ({ closeModal }) => {
     
                             {/* Display subprocesses if any */}
                             {step.subprocesses.length > 0 && (
-                                <Box ml={5} mt={2}>
+                                <Box ml={5} mt={1}>
                                     {step.subprocesses.map((sub, subIndex) => (
                                         <Flex key={subIndex} gap={3} color={sub.status === 'in-progress' ? 'black' : sub.status === 'error' ? 'red' : 'gray'}>
                                             <Text fontSize={"xs"} fontStyle={'italic'} fontWeight={sub.status === 'in-progress' ? 'bold' : 'normal'}>
@@ -175,9 +199,23 @@ const ETLModal = ({ closeModal }) => {
                         </Box>
                     ))}
                 </Flex>
-                <Flex mt={5}>
-                    <Button size={'sm'} onClick={interruptETL}>Cancel</Button>
-                </Flex>
+                <Divider mt={4} mb={2}/>
+                {finalResults && (
+                    <Text px={2} fontSize={'xs'} color={'gray.500'}>
+                        Process completed {finalResults.nodesCreated} nodes and {finalResults.relationshipsCreated} relationships in {finalResults.timeTaken} seconds.
+                    </Text>
+                )}
+                <Divider mt={2}/>
+                {
+                    finalResults ?
+                    <Flex mt={5} justifyContent={'end'}>
+                        <Button size={'sm'} onClick={closeETLModal}>Close</Button>
+                    </Flex>
+                    : 
+                    <Flex mt={5} justifyContent={'end'}>
+                        <Button size={'sm'} onClick={interruptETL}>Cancel</Button>
+                    </Flex>
+                }
             </Box>
         ) : (
             <Box p={5}>
