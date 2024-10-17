@@ -7,7 +7,7 @@ start_time = time.time()
 total_nodes_created = 0
 total_relationships_created = 0
 
-def log_final_results():
+def log_final_results(status):
     """Logs the total time, nodes created, and relationships created."""
     end_time = time.time()
     total_time_taken = end_time - start_time
@@ -15,13 +15,14 @@ def log_final_results():
         "stepName": "log",
         "totalTimeTaken": total_time_taken,
         "totalNodesCreated": total_nodes_created,
-        "totalRelationshipsCreated": total_relationships_created
+        "totalRelationshipsCreated": total_relationships_created,
+        "status": status
     }
     print(json.dumps(result))
 
 
 def printStatus(step_name, sub_process_name, sub_process_status, sub_process_completed, percentage=None):
-    """Utility function to print structured status updates."""
+    """Utility function to print structured status updates and exit if the status is False."""
     data = {
         "stepName": step_name,
         "subProcessName": sub_process_name,
@@ -31,6 +32,9 @@ def printStatus(step_name, sub_process_name, sub_process_status, sub_process_com
     if percentage is not None:
         data["percentage"] = percentage // 1
     print(json.dumps(data))
+    if sub_process_status == 'error':
+        log_final_results(False)
+        sys.exit()
 
 
 def ValidateProject(path):
@@ -60,7 +64,6 @@ def EstablishNeo4jConnection(db):
         printStatus("Starting ETL pipeline", "Establishing connection with Neo4j Server", "completed", True, 100)
         return driver
     except Exception as e:
-        print(e)
         printStatus("Starting ETL pipeline", "Establishing connection with Neo4j Server", "error", False, 0)
         return None
 
@@ -234,4 +237,4 @@ if __name__ == "__main__":
     nodes, relationships = CheckNodesAndRelationship(config)
     nodes_df, rels_df = TransformEntities(nodes, relationships, data_df)
     ExportEntities(driver, relationships, nodes_df, rels_df, 100)
-    log_final_results()
+    log_final_results(True)

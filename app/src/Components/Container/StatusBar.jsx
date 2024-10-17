@@ -64,7 +64,7 @@ const StatusBar = ({storeData, dbStatus, setDbStatus, openSetModal, columns, sta
                         </Flex>
                 }
                 <Box my={"auto"} role="button">
-                    <FcEngineering onClick={() => openSetModal(<SettingsModal {...{dbStatus, setDbStatus, storeData, closeModal}}/>, "2xl")} />
+                    <FcEngineering onClick={() => openSetModal(<SettingsModal {...{setDbStatus, storeData, closeModal}}/>, "2xl")} />
                 </Box>
             </Flex>
         </Flex>

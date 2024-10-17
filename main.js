@@ -83,7 +83,6 @@ const createMainWindow = (data) => {
     ipcMain.on('python-interrupt', (event) => {
         if (pythonProcess) {
             pythonProcess.kill('SIGINT'); 
-            console.log('Python process has been interrupted.');
             event.sender.send('python-interrupted', 'ETL was interuptted');
             pythonProcess = null;
         } else {

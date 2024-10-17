@@ -22,7 +22,6 @@ const createNodeQueries = (data) => {
             const merge = node.merge;
 
             let query = merge ? `MERGE (` : `CREATE (`;
-            console.log(nodeKey)
             query += `n${i}:${nodeLabel} {`;
             i += 1
             const properties = Object.keys(nodeAttributes).map((attrKey) => {

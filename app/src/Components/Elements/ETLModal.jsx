@@ -1,6 +1,7 @@
 import { Box, Button, Divider, Flex, Spinner, Text, useToast } from "@chakra-ui/react";
 import { useEffect, useState } from "react";
 import { FcOk } from "react-icons/fc";
+import { IoWarning } from "react-icons/io5";
 
 const ETLModal = ({ closeModal }) => {
     const [etlState, setEtlState] = useState(true);
@@ -18,7 +19,7 @@ const ETLModal = ({ closeModal }) => {
     };
 
     const [etlStatus, setEtlStatus] = useState(defaultEtlStatus);
-    const [finalResults, setFinalResults] = useState(null); // State to store final ETL result (nodes, relationships, time)
+    const [finalResults, setFinalResults] = useState(null);
     const toast = useToast();
     const [error, setError] = useState('');
 
@@ -27,20 +28,23 @@ const ETLModal = ({ closeModal }) => {
 
         window.ipcRenderer.on('python-output', (data) => {
             const outputData = data.toString();
-            console.log('Received from Python:', outputData);
             handlePythonOutput(outputData);
         });
 
         window.ipcRenderer.on('python-error', (data) => {
-            console.log('Python Error:', data);
-            setError((prev) => `${prev}\n${data}`);
+            window.ipcRenderer.send('python-interrupt');
+            toast({
+                title: <Text fontSize={'sm'}>An unexpected error occured. Please check the logs</Text>,
+                status: "danger",
+                duration: 3000,
+                variant: "subtle"
+            });
         });
 
         window.ipcRenderer.on('python-exit', (code) => {
         });
 
         window.ipcRenderer.on('python-interupted', (code) => {
-            console.log(`ETL interrupted`);
         });
 
         return () => {
@@ -82,7 +86,14 @@ const ETLModal = ({ closeModal }) => {
             const jsonDataArray = outputData.trim().split('\n'); 
             jsonDataArray.forEach(jsonStr => {
                 const parsedData = JSON.parse(jsonStr);
-
+                if(parsedData.subProcessStatus === "error"){
+                    toast({
+                        title: <Text fontSize={'sm'}>An unexpected error occured. Please check the logs</Text>,
+                        status: "warning",
+                        duration: 3000,
+                        variant: "subtle"
+                    });
+                }
                 if (parsedData.totalTimeTaken) {
                     const timeTaken = parsedData.totalTimeTaken < 1
                         ? `${(parsedData.totalTimeTaken * 1000).toFixed(2)} ms`
@@ -90,20 +101,22 @@ const ETLModal = ({ closeModal }) => {
                     
                     setFinalResults({
                         timeTaken,
+                        status: parsedData.status,
                         nodesCreated: parsedData.totalNodesCreated,
                         relationshipsCreated: parsedData.totalRelationshipsCreated
                     });
-                    toast({
-                        title: <Text fontSize={'sm'}>ETL process successful</Text>,
-                        status: "success",
-                        duration: 3000,
-                        variant: "subtle"
-                    });
+                    if(parsedData.status === true){
+                        toast({
+                            title: <Text fontSize={'sm'}>ETL process successful</Text>,
+                            status: "success",
+                            duration: 3000,
+                            variant: "subtle"
+                        });
+                    }
                 } else {
                     setEtlStatus((prevStatus) => {
                         const updatedSteps = prevStatus.steps.map((step) => {
                             if (step.name === parsedData.stepName) {
-                                // Update step and subprocess if exists
                                 const updatedStep = {
                                     ...step,
                                     status: parsedData.subProcessName ? parsedData.subProcessStatus : parsedData.subProcessStatus || "in-progress",
@@ -170,15 +183,18 @@ const ETLModal = ({ closeModal }) => {
                                     {step.name}
                                 </Text>
                                 {step.completed && <FcOk fontSize={20} />}
-                                {step.status === 'in-progress' && (
+                                {step.status === 'in-progress' ? (
                                     <Spinner size="sm" color="blue.500" ml={2} />
-                                )}
+                                ) : step.status === 'error' &&(
+                                    <Text my={"auto"} fontSize={20} color={"orangered"}><IoWarning /></Text>
+                                )
+
+                            }
                                 <Text>
                                     {step.percentage === 0 || step.percentage === 100 ? '' : `${step.percentage}%`}
                                 </Text>
                             </Flex>
     
-                            {/* Display subprocesses if any */}
                             {step.subprocesses.length > 0 && (
                                 <Box ml={5} mt={1}>
                                     {step.subprocesses.map((sub, subIndex) => (
@@ -202,12 +218,12 @@ const ETLModal = ({ closeModal }) => {
                 <Divider mt={4} mb={2}/>
                 {finalResults && (
                     <Text px={2} fontSize={'xs'} color={'gray.500'}>
-                        Process completed {finalResults.nodesCreated} nodes and {finalResults.relationshipsCreated} relationships in {finalResults.timeTaken} seconds.
+                        Process completed in {finalResults.nodesCreated} nodes and {finalResults.relationshipsCreated} relationships in {finalResults.timeTaken} seconds.
                     </Text>
                 )}
                 <Divider mt={2}/>
                 {
-                    finalResults ?
+                    finalResults && finalResults.status === false ?
                     <Flex mt={5} justifyContent={'end'}>
                         <Button size={'sm'} onClick={closeETLModal}>Close</Button>
                     </Flex>

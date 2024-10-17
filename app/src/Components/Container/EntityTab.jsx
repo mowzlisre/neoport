@@ -41,9 +41,6 @@ const EntityTab = ({storeData, setCurrent, openSetModal, closeModal}) => {
         }
     };
 
-    useEffect(() => {
-        openSetModal(() => <ETLModal {...{closeModal}} />, "2xl");
-    }, [])
 
     return (
         <Flex p={1} gap={2} direction={"column"}>

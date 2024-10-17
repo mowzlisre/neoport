@@ -6,6 +6,7 @@ import { defaultConf } from '../lib/conf';
 
 function SettingsModal({ dbStatus, setDbStatus, storeData, closeModal }) {
     const [show, setShow] = useState(false)
+    const [db, setDb] = useState(dbStatus)
     const handleClick = () => setShow(!show)
     const [isTesting, setIsTesting] = useState(false)
     const [pref, setPref] = useState(storeData.db)
@@ -17,6 +18,7 @@ function SettingsModal({ dbStatus, setDbStatus, storeData, closeModal }) {
         setIsTesting(true)
         const status = await window.settings.testConnection(pref);
         setDbStatus(status)
+        setDb(status)
         setIsTesting(false)
     }
 
@@ -194,17 +196,17 @@ function SettingsModal({ dbStatus, setDbStatus, storeData, closeModal }) {
                             }
                             <Box my={"auto"}>
                                 {
-                                    dbStatus === 'ServiceUnavailable' ?
+                                    db === 'ServiceUnavailable' ?
                                         <Flex gap={1}>
                                             <FcDeleteDatabase />
                                             <Text fontWeight={"bold"} color={"red"} fontSize={"2xs"} my={"auto"}>Offline</Text>
                                         </Flex> :
-                                    dbStatus === "Neo.ClientError.Security.Unauthorized" ?
+                                    db === "Neo.ClientError.Security.Unauthorized" ?
                                         <Flex gap={1}>
                                             <FcDataEncryption />
                                             <Text fontWeight={"bold"} color={"orange"} fontSize={"2xs"} my={"auto"}>Unauthorized</Text>
                                         </Flex> :
-                                    dbStatus === "ConnectionEstablished" &&
+                                    db === "ConnectionEstablished" &&
                                         <Flex gap={1}>
                                             <FcAcceptDatabase />
                                             <Text fontWeight={"bold"} color={"green"} fontSize={"2xs"} my={"auto"}>Online</Text>
