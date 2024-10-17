@@ -41,7 +41,10 @@ const EntitySandBox = ({ storeData, current, setCurrent, columns, openSetModal, 
         const isNameValid = current.name && current.name.trim() !== '';
         const allAttributesValid = Object.values(current.attributes).every(param => param.value.trim() !== '');
         const allKeysValid = Object.values(current.attributes).every(param => param.key.trim() !== '');
-
+    
+        // Check if node has at least 1 attribute
+        const hasAttributes = Object.keys(current.attributes).length > 0;
+    
         if (!isNameValid || !allAttributesValid || !allKeysValid) {
             toast({
                 title: <Text fontSize={'sm'}>Some fields are missing</Text>,
@@ -49,47 +52,58 @@ const EntitySandBox = ({ storeData, current, setCurrent, columns, openSetModal, 
             });
             return;
         }
-
-        if(!hasDuplicateAttributes(current)){
+    
+        if (!hasAttributes) {
+            toast({
+                title: <Text fontSize={'sm'}>Node must have at least one attribute</Text>,
+                status: "warning", duration: 3000, variant: "subtle"
+            });
+            return;
+        }
+    
+        if (!hasDuplicateAttributes(current)) {
             toast({
                 title: <Text fontSize={'sm'}>Duplicate params found</Text>,
                 status: "warning", duration: 3000, variant: "subtle"
             });
-            return
+            return;
         }
-
+    
         if (current.type === "node") {
             const newNodeData = { ...current };
             const updatedNodes = { ...storeData.nodes };
-            if(key !== null){
+            if (key !== null) {
                 updatedNodes[current.name] = newNodeData;
-                if(key !== current.name){
-                    delete updatedNodes[key]
+                if (key !== current.name) {
+                    delete updatedNodes[key];
                 }
-            } else{
+            } else {
                 updatedNodes[current.name] = newNodeData;
             }
             storeData.nodes = updatedNodes;
         } else if (current.type === "relationships") {
             const newRelationshipData = { ...current };
             const updatedRelationships = { ...storeData.relationships };
-            if(key !== null){
+            if (key !== null) {
                 updatedRelationships[current.name] = newRelationshipData;
-                if(key !== current.name){
-                    delete updatedRelationships[key]
+                if (key !== current.name) {
+                    delete updatedRelationships[key];
                 }
-            } else{
+            } else {
                 updatedRelationships[current.name] = newRelationshipData;
             }
             storeData.relationships = updatedRelationships;
         }
-
+    
         setCurrent((prevCurrent) => ({ ...prevCurrent, index: [indexedAttribute] }));
-
+    
         setStoreData(storeData);
         setCurrent({});
-        window.electron.saveProject(storeData, localStorage.getItem("currentProject"))
+        window.electron.saveProject(storeData, localStorage.getItem("currentProject"));
     };
+    
+
+    console.log(storeData.nodes)
 
     return (
         current && (

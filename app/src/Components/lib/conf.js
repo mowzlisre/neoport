@@ -100,6 +100,9 @@ export function validateProjectData(projectData) {
     return { valid: false, error: 'Node keys cannot be empty.' };
   }
 
+  
+  
+
   for (const relKey of relationshipKeys) {
     const relationship = relationships[relKey];
     const { node1, node2, name } = relationship;
@@ -119,6 +122,7 @@ export function validateProjectData(projectData) {
     if (relationship.type !== 'relationships') {
       return { valid: false, error: `Relationship "${relKey}" has an invalid type: ${relationship.type}` };
     }
+    
   }
   for (const nodeKey of nodeKeys) {
     const node = nodes[nodeKey];
@@ -129,6 +133,15 @@ export function validateProjectData(projectData) {
     if (node.type !== 'node') {
       return { valid: false, error: `Node "${nodeKey}" has an invalid type: ${node.type}.` };
     }
+
+    if (Object.keys(node.attributes).length === 0) {
+      return { valid: false, error: `Node "${nodeKey}" must have at least one attribute.` };
+    }
+    
+    if (!node.index || node.index.length === 0) {
+      return { valid: false, error: `Node "${nodeKey}" must have an indexed attribute.` };
+    }
+    
     for (const attrKey in node.attributes) {
       const attribute = node.attributes[attrKey];
       if (!attribute.key || !attribute.value) {
