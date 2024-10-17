@@ -2,22 +2,23 @@ import { Box, Button, Divider, Flex, Spinner, Text, useToast } from "@chakra-ui/
 import { useEffect, useState } from "react";
 import { FcOk } from "react-icons/fc";
 
-const ETLModal = ({closeModal}) => {
+const ETLModal = ({ closeModal }) => {
     const [etlState, setEtlState] = useState(true);
+
+    // Default ETL status with subprocesses allowed for each step
     const defaultEtlStatus = {
         steps: [
-            { name: "Starting ETL pipeline", status: "pending", completed: false, percentage: 0 },
-            { name: "Analysing nodes and relationships", status: "pending", completed: false, percentage: 0 },
-            { name: "Transforming Entities", status: "pending", completed: false, percentage: 0 },
-            { name: "Exporting data to Neo4j Database", status: "pending", completed: false, percentage: 0 }
+            { name: "Starting ETL pipeline", status: "pending", completed: false, percentage: 0, subprocesses: [] },
+            { name: "Extracting nodes and relationships", status: "pending", completed: false, percentage: 0, subprocesses: [] },
+            { name: "Transforming Entities", status: "pending", completed: false, percentage: 0, subprocesses: [] },
+            { name: "Exporting data to Neo4j Database", status: "pending", completed: false, percentage: 0, subprocesses: [] }
         ],
         currentStep: "Starting ETL pipeline",
         completed: false
     };
-    const [etlStatus, setEtlStatus] = useState(defaultEtlStatus);
 
-    const toast = useToast()
-    const [output, setOutput] = useState('');
+    const [etlStatus, setEtlStatus] = useState(defaultEtlStatus);
+    const toast = useToast();
     const [error, setError] = useState('');
 
     useEffect(() => {
@@ -67,39 +68,69 @@ const ETLModal = ({closeModal}) => {
 
     const resetEtlStatus = () => {
         setEtlStatus(defaultEtlStatus);
-        setEtlState(false); // Optionally reset the state to show the "Start" screen
+        setEtlState(false);
     };
 
     const handlePythonOutput = (outputData) => {
-        
-        const parsedData = JSON.parse(outputData); 
+        try {
+            const jsonDataArray = outputData.trim().split('\n'); 
+            jsonDataArray.forEach(jsonStr => {
+                const parsedData = JSON.parse(jsonStr);
+                
+                setEtlStatus((prevStatus) => {
+                    const updatedSteps = prevStatus.steps.map((step) => {
+                        if (step.name === parsedData.stepName) {
+                            // Update step and subprocess if exists
+                            const updatedStep = {
+                                ...step,
+                                status: parsedData.subProcessName ? parsedData.subProcessStatus : parsedData.subProcessStatus || "in-progress",
+                                completed: parsedData.subProcessCompleted,
+                                percentage: parsedData.percentage || 0,
+                                subprocesses: parsedData.subProcessName ? updateSubprocesses(step.subprocesses, parsedData) : step.subprocesses
+                            };
+                            return updatedStep;
+                        }
+                        return step;
+                    });
 
-        setEtlStatus((prevStatus) => {
-            const updatedSteps = prevStatus.steps.map((step) => {
-                if (step.name === parsedData.stepName) {
                     return {
-                        ...step,
-                        status: parsedData.status, 
-                        completed: parsedData.completed, 
-                        percentage: parsedData.percentage 
+                        ...prevStatus,
+                        steps: updatedSteps,
+                        currentStep: parsedData.stepName,
+                        completed: updatedSteps.every((step) => step.completed)
                     };
-                }
-                return step;
+                });
             });
+        } catch (error) {
+            console.error("Error parsing JSON data:", error);
+        }
+    };
 
-            return {
-                ...prevStatus,
-                steps: updatedSteps,
-                currentStep: parsedData.stepName,
-                completed: updatedSteps.every((step) => step.completed) 
+    // Helper function to update subprocesses
+    const updateSubprocesses = (subprocesses, parsedData) => {
+        const subprocessIndex = subprocesses.findIndex(sub => sub.name === parsedData.subProcessName);
+        if (subprocessIndex > -1) {
+            subprocesses[subprocessIndex] = {
+                name: parsedData.subProcessName,
+                status: parsedData.subProcessStatus,
+                completed: parsedData.subProcessCompleted,
+                percentage: parsedData.percentage || 0
             };
-        });
+        } else {
+            subprocesses.push({
+                name: parsedData.subProcessName,
+                status: parsedData.subProcessStatus,
+                completed: parsedData.subProcessCompleted,
+                percentage: parsedData.percentage || 0
+            });
+        }
+        return subprocesses;
     };
 
     const handleStart = () => {
         setEtlState(true);
     };
-    
+
     return (
         etlState ? (
             <Box p={5}>
@@ -109,18 +140,39 @@ const ETLModal = ({closeModal}) => {
                 <Divider my={2} />
                 <Flex mt={5} direction={'column'} gap={2}>
                     {etlStatus.steps.map((step, index) => (
-                        <Flex key={index} gap={3} color={step.status === 'in-progress' ? 'black' : 'gray'}>
-                            <Text fontWeight={step.status === 'in-progress' ? 'bold' : 'normal'}>
-                                {step.name}
-                            </Text>
-                            {step.completed && <FcOk fontSize={20} />}
-                            {step.status === 'in-progress' && (
-                                <Spinner size="sm" color="blue.500" ml={2} />
+                        <Box key={index} ml={3}>
+                            <Flex gap={3} color={step.status === 'in-progress' ? 'black' : step.status === 'error' ? 'red' : 'gray'}>
+                                <Text fontWeight={step.status === 'in-progress' ? 'bold' : 'normal'}>
+                                    {step.name}
+                                </Text>
+                                {step.completed && <FcOk fontSize={20} />}
+                                {step.status === 'in-progress' && (
+                                    <Spinner size="sm" color="blue.500" ml={2} />
+                                )}
+                                <Text>
+                                    {step.percentage === 0 || step.percentage === 100 ? '' : `${step.percentage}%`}
+                                </Text>
+                            </Flex>
+    
+                            {/* Display subprocesses if any */}
+                            {step.subprocesses.length > 0 && (
+                                <Box ml={5} mt={2}>
+                                    {step.subprocesses.map((sub, subIndex) => (
+                                        <Flex key={subIndex} gap={3} color={sub.status === 'in-progress' ? 'black' : sub.status === 'error' ? 'red' : 'gray'}>
+                                            <Text fontSize={"xs"} fontStyle={'italic'} fontWeight={sub.status === 'in-progress' ? 'bold' : 'normal'}>
+                                                {sub.name}
+                                            </Text>
+                                            {sub.status === 'in-progress' && (
+                                                <Spinner size="sm" color="blue.500" ml={2} />
+                                            )}
+                                            <Text>
+                                                {sub.percentage === 0 || sub.percentage === 100 ? '' : `${sub.percentage}%`}
+                                            </Text>
+                                        </Flex>
+                                    ))}
+                                </Box>
                             )}
-                            <Text>
-                                {step.percentage === 0 || step.percentage === 100 ? '' : `${step.percentage}%`}
-                            </Text>
-                        </Flex>
+                        </Box>
                     ))}
                 </Flex>
                 <Flex mt={5}>
