@@ -33,9 +33,10 @@ const ETLModal = ({ closeModal }) => {
 
         window.ipcRenderer.on('python-error', (data) => {
             window.ipcRenderer.send('python-interrupt');
+            console.log(data)
             toast({
                 title: <Text fontSize={'sm'}>An unexpected error occured. Please check the logs</Text>,
-                status: "danger",
+                status: "error",
                 duration: 3000,
                 variant: "subtle"
             });
@@ -218,7 +219,7 @@ const ETLModal = ({ closeModal }) => {
                 <Divider mt={4} mb={2}/>
                 {finalResults && (
                     <Text px={2} fontSize={'xs'} color={'gray.500'}>
-                        Process completed in {finalResults.nodesCreated} nodes and {finalResults.relationshipsCreated} relationships in {finalResults.timeTaken} seconds.
+                        Process completed with {finalResults.nodesCreated} nodes and {finalResults.relationshipsCreated} relationships in {finalResults.timeTaken} seconds.
                     </Text>
                 )}
                 <Divider mt={2}/>

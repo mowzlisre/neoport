@@ -45,7 +45,7 @@ const NodeEntityForm = ({ current, setCurrent, columns, saveEntity, cancelSandBo
         setCurrent((prevCurrent) => {
             let index = indexedAttribute[0]
             if(Object.keys(current.attributes).length === 0){
-                index = 0
+                index = "0"
             } 
             const newAttributes = {
                 ...prevCurrent.attributes,

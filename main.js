@@ -2,9 +2,42 @@ const { app, BrowserWindow, ipcMain, Menu, globalShortcut } = require("electron"
 const path = require("path");
 let welcomeWindow;
 let mainWindow;
-const { spawn } = require('child_process');
+const { spawn, execFile } = require('child_process');
+const os = require('os');
+const fs = require('fs');
+const { checkPythonInstallation, checkPythonEnviroment, checkDependencies } = require("./python-handler");
 
 const route = "http://localhost:3000/#";
+
+const createPreCheckWindow = () => {
+
+    const preCheckUrl = `${route}/precheck`;
+    const preCheckWindow = createWindow(800, 500, preCheckUrl, {
+        resizable: false,
+        frame: false,
+    });
+
+    preCheckWindow.on("closed", () => {
+        if (!mainWindow) {
+            app.quit();
+        }
+    });
+
+    return preCheckWindow;
+};
+
+ipcMain.handle('check-python', async () => {
+    return checkPythonInstallation()
+});
+
+
+ipcMain.handle('check-python-env', async () => {
+    return checkPythonEnviroment()
+});
+
+ipcMain.handle('check-dependencies', async () => {
+    return checkDependencies()
+});
 
 const createWindow = (width, height, urlPath, options = {}) => {
     const newWindow = new BrowserWindow({
@@ -28,12 +61,12 @@ const createWelcomeWindow = (path) => {
         welcomeUrl = `${route}/updatedatasource`;
     }
 
-    welcomeWindow = createWindow(800, 500, welcomeUrl, {
+    welcomeWindow = createWindow(800, 600, welcomeUrl, {
         resizable: false,
         frame: false,
     });
 
-    mainWindow.webContents.openDevTools()
+    welcomeWindow.webContents.openDevTools()
 
     welcomeWindow.on('closed', () => {
         welcomeWindow = null;
@@ -54,7 +87,6 @@ const createMainWindow = (data) => {
     mainWindow.webContents.on('did-finish-load', () => {
         mainWindow.webContents.send('openWithFilePath', data);
     });
-    mainWindow.webContents.openDevTools()
 
     mainWindow.on('closed', () => {
         mainWindow = null;
@@ -64,22 +96,39 @@ const createMainWindow = (data) => {
     
     ipcMain.on('python-start', (event, args) => {
         const scriptPath = path.join(__dirname, `./scripts/${args[0]}.py`);
+        const homeDir = os.homedir();
+        const venvPath = path.join(homeDir, '.neoport', '.venv');
     
-        pythonProcess = spawn('python3', [scriptPath, ...args]);
+        const pythonExecutable =
+            process.platform === 'win32'
+                ? path.join(venvPath, 'Scripts', 'python.exe')
+                : path.join(venvPath, 'bin', 'python3');
+    
+        const cli = [pythonExecutable, scriptPath, ...args];
+    
+        pythonProcess = spawn(cli[0], cli.slice(1));
+    
+        let stderrData = '';
     
         pythonProcess.stdout.on('data', (data) => {
             mainWindow.webContents.send('python-output', data.toString());
         });
     
         pythonProcess.stderr.on('data', (data) => {
-            mainWindow.webContents.send('python-error', data.toString());
+            stderrData += data.toString();
+
+            // Send data to Developer
         });
     
         pythonProcess.on('close', (code) => {
+            if (stderrData) {
+                console.log(stderrData);
+                mainWindow.webContents.send('python-error', stderrData);
+            }
             mainWindow.webContents.send('python-exit', code);
         });
-    });
-
+    });    
+    
     ipcMain.on('python-interrupt', (event) => {
         if (pythonProcess) {
             pythonProcess.kill('SIGINT'); 
@@ -96,6 +145,20 @@ const createMainWindow = (data) => {
 
 app.whenReady().then(() => {
     Menu.setApplicationMenu(null);
+
+    const preCheckWindow = createPreCheckWindow();
+
+    ipcMain.on("proceedAfterPreCheck", () => {
+        if (preCheckWindow) {
+            preCheckWindow.close();
+            preCheckWindow.on("closed", () => {
+                createWelcomeWindow();
+            });
+        } else {
+            createWelcomeWindow();
+        }
+    });
+
     globalShortcut.register('CommandOrControl+Shift+I', () => {
         const focusedWindow = BrowserWindow.getFocusedWindow();
         if (focusedWindow) {
@@ -147,7 +210,7 @@ app.whenReady().then(() => {
         createWelcomeWindow();
     });
 
-    createWelcomeWindow();
+    // createWelcomeWindow();
 });
 
 app.on('window-all-closed', () => {

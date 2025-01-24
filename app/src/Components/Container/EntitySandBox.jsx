@@ -103,7 +103,6 @@ const EntitySandBox = ({ storeData, current, setCurrent, columns, openSetModal, 
     };
     
 
-    console.log(storeData.nodes)
 
     return (
         current && (
