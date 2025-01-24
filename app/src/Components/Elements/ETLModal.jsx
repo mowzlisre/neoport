@@ -21,7 +21,6 @@ const ETLModal = ({ closeModal }) => {
     const [etlStatus, setEtlStatus] = useState(defaultEtlStatus);
     const [finalResults, setFinalResults] = useState(null);
     const toast = useToast();
-    const [error, setError] = useState('');
 
     useEffect(() => {
         if (etlState) startPython();
@@ -79,7 +78,7 @@ const ETLModal = ({ closeModal }) => {
     const resetEtlStatus = () => {
         setEtlStatus(defaultEtlStatus);
         setEtlState(false);
-        setFinalResults(null); // Reset final results
+        setFinalResults(null);
     };
 
     const handlePythonOutput = (outputData) => {
@@ -224,7 +223,7 @@ const ETLModal = ({ closeModal }) => {
                 )}
                 <Divider mt={2}/>
                 {
-                    finalResults && finalResults.status === false ?
+                    finalResults && finalResults.status === true ?
                     <Flex mt={5} justifyContent={'end'}>
                         <Button size={'sm'} onClick={closeETLModal}>Close</Button>
                     </Flex>

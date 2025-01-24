@@ -165,7 +165,7 @@ def CreateNodeIndexes(driver, nodes_df):
 
 
 def ExportNodes(driver, nodes, nodes_df, batch_size=100):
-    global total_nodes_created 
+    global total_nodes_created
     total_rows = sum(len(df) for df in nodes_df.values())
     processed_rows = 0
 
@@ -174,54 +174,65 @@ def ExportNodes(driver, nodes, nodes_df, batch_size=100):
             columns = df.columns
             total_node_rows = len(df)
             for i in range(0, total_node_rows, batch_size):
-                batch = df.iloc[i:min(i + batch_size, total_node_rows)].to_dict(orient='records')
-                set_clause = ', '.join([f"n.{col} = row.{col}" for col in columns])
+                batch = df.iloc[i:min(i + batch_size, total_node_rows)].to_dict(orient="records")
+                set_clause = ", ".join([f"n.{col} = row.{col}" for col in columns])
                 merge = "MERGE" if nodes[node]["merge"] else "CREATE"
-
                 query = f"""
                 UNWIND $batch AS row
                 {merge} (n:{node} {{{columns[0]}: row.{columns[0]}}})
                 SET {set_clause}
                 """
-                session.run(query, batch=batch)
-                total_nodes_created += len(batch)
-                processed_rows += len(batch)
+                result = session.run(query, batch=batch)
+                summary = result.consume()
+                nodes_created = summary.counters.nodes_created
+                total_nodes_created += nodes_created
+                processed_rows += nodes_created
                 percentage = (processed_rows / total_rows) * 100
-                printStatus("Exporting data to Neo4j Database", "Exporting Nodes", "in-progress", False, percentage)
-        
+                printStatus(
+                    "Exporting data to Neo4j Database", "Exporting Nodes", "in-progress", False, percentage
+                )
+
         printStatus("Exporting data to Neo4j Database", "Exporting Nodes", "completed", True, 100)
+
 
 
 def ExportRelationships(driver, relationships, rels_df, nodes_df, batch_size=100):
     global total_relationships_created
-    total_rels_rows = sum(len(rel_df) for rel_df in rels_df.values())
+    total_rels_rows = 0 
     processed_rels_rows = 0
 
     with driver.session() as session:
         for rel in relationships:
             rel_data = rels_df[rel]
+            unique_rel_data = rel_data.drop_duplicates(subset=['SOURCE_NODE', 'TARGET_NODE'])
+            total_rels_rows += len(unique_rel_data)
             node1 = relationships[rel]["node1"]
             node2 = relationships[rel]["node2"]
             source_attr = nodes_df[node1].instrument_name
             target_attr = nodes_df[node2].instrument_name
-            rel_columns = [col for col in rel_data.columns if col not in ['SOURCE_NODE', 'TARGET_NODE']]
-            for i in range(0, len(rel_data), batch_size):
-                batch = rel_data.iloc[i:i + batch_size].to_dict(orient='records')
+            rel_columns = [col for col in unique_rel_data.columns if col not in ['SOURCE_NODE', 'TARGET_NODE']]
+            for i in range(0, len(unique_rel_data), batch_size):
+                batch = unique_rel_data.iloc[i:i + batch_size].to_dict(orient='records')
                 merge = "MERGE" if relationships[rel]["merge"] else "CREATE"
+                
                 query = f"""
                 UNWIND $batch AS row
                 MATCH (n1:{node1} {{{source_attr}: row.SOURCE_NODE}})
                 MATCH (n2:{node2} {{{target_attr}: row.TARGET_NODE}})
-                {merge} (n1)-[r:{rel} {{"""
+                {merge} (n1)-[r:{rel} {{
+                """
                 query += ', '.join([f"{col}: row.{col}" for col in rel_columns])
                 query += f"}}]->(n2)"
-                session.run(query, batch=batch)
-                total_relationships_created += len(batch)
-                processed_rels_rows += len(batch)
+                result = session.run(query, batch=batch)
+                summary = result.consume()
+                relationships_created = summary.counters.relationships_created
+                total_relationships_created += relationships_created
+                processed_rels_rows += relationships_created
                 percentage = (processed_rels_rows / total_rels_rows) * 100
                 printStatus("Exporting data to Neo4j Database", "Exporting Relationships", "in-progress", False, percentage)
 
         printStatus("Exporting data to Neo4j Database", "Exporting Relationships", "completed", True, 100)
+
 
 
 def ExportEntities(driver, relationships, nodes_df, rels_df, batch_size):
