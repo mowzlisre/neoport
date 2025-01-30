@@ -1,13 +1,15 @@
 const { app, BrowserWindow, ipcMain, Menu, globalShortcut } = require("electron");
 const path = require("path");
-const { spawn, execFile } = require("child_process");
+const { spawn } = require("child_process");
 const os = require("os");
 const fs = require("fs");
 const { checkPythonInstallation, checkPythonEnviroment, checkDependencies } = require("./python-handler");
-
 const isDev = false
-const route = isDev ? "http://localhost:3000/#" : "file://";
-const buildPath = path.join(__dirname, "./app/build/index.html");
+const route = isDev
+    ? "http://localhost:3000/#"
+    : ``;
+
+const buildPath = path.join(app.getAppPath(), "app", "build", "index.html");
 
 let welcomeWindow;
 let mainWindow;
@@ -27,8 +29,8 @@ const createWindow = (width, height, urlPath, options = {}) => {
     if (isDev) {
         newWindow.loadURL(urlPath);
     } else {
-        newWindow.loadFile(buildPath, { hash: urlPath.split("#")[1] });
-    }
+        newWindow.loadURL(`${buildPath}#${urlPath}`);
+    };
 
     return newWindow;
 };

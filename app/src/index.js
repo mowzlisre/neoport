@@ -1,25 +1,23 @@
-import { ChakraProvider } from "@chakra-ui/react";
 import React from 'react';
 import ReactDOM from 'react-dom/client';
+import { HashRouter, Routes, Route } from 'react-router-dom';
+import { ChakraProvider } from "@chakra-ui/react";
 import { Provider } from 'react-redux';
-import { HashRouter, Route, Routes } from "react-router-dom";
-import Analyse from './Components/Screens/Analyse';
-import NewProject from './Components/Screens/NewProject';
-import PreCheck from './Components/Screens/Precheck';
-import UpdateDataSource from './Components/Screens/UpdateDataSource';
-import WelcomeScreen from './Components/Screens/WelcomeScreen';
-import './index.css';
 import store from './redux/store';
+import PreCheck from './Components/Screens/Precheck';
+import WelcomeScreen from './Components/Screens/WelcomeScreen';
+import NewProject from './Components/Screens/NewProject';
+import UpdateDataSource from './Components/Screens/UpdateDataSource';
+import Analyse from './Components/Screens/Analyse';
+import './index.css';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 
 root.render(
   <Provider store={store}>
     <ChakraProvider>
-      <HashRouter>
+      <HashRouter>  {/* ✅ Make sure to use HashRouter here! */}
         <Routes>
-          {/* Uncomment or modify this route if needed */}
-          {/* <Route path='/' element={<Welcome />} /> */}
           <Route path="/precheck" element={<PreCheck onReady={() => window.ipcRenderer.send('proceedAfterPreCheck')} />} />
           <Route path="/prompt" element={<WelcomeScreen />} />
           <Route path="/newproject" element={<NewProject />} />
@@ -30,4 +28,3 @@ root.render(
     </ChakraProvider>
   </Provider>
 );
-
