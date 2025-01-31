@@ -14,6 +14,23 @@ const buildPath = path.join(app.getAppPath(), "app", "build", "index.html");
 let welcomeWindow;
 let mainWindow;
 
+const extractScript = (scriptName) => {
+    // Get the script path inside ASAR
+    const scriptPathInsideAsar = path.join(__dirname, "scripts", scriptName);
+
+    // Create a temp folder to extract the script
+    const tempDir = path.join(os.tmpdir(), "neoport-scripts");
+    if (!fs.existsSync(tempDir)) {
+        fs.mkdirSync(tempDir, { recursive: true });
+    }
+
+    // Copy the script to the temp folder
+    const extractedScriptPath = path.join(tempDir, scriptName);
+    fs.copyFileSync(scriptPathInsideAsar, extractedScriptPath);
+
+    return extractedScriptPath;  // Return the path to the extracted file
+};
+
 const createWindow = (width, height, urlPath, options = {}) => {
     const newWindow = new BrowserWindow({
         width: width,
@@ -86,14 +103,13 @@ const createMainWindow = (data) => {
     let pythonProcess;
 
     ipcMain.on("python-start", (event, args) => {
-        const scriptPath = path.join(__dirname, `./scripts/${args[0]}.py`);
-        const homeDir = os.homedir();
-        const venvPath = path.join(homeDir, ".neoport", ".venv");
+        // Extract Python script from ASAR before execution
+        const scriptPath = extractScript(`${args[0]}.py`);
 
-        const pythonExecutable =
-            process.platform === "win32"
-                ? path.join(venvPath, "Scripts", "python.exe")
-                : path.join(venvPath, "bin", "python3");
+        // Choose the correct Python executable
+        const pythonExecutable = process.platform === "win32"
+            ? path.join(os.homedir(), ".neoport", ".venv", "Scripts", "python.exe")
+            : path.join(os.homedir(), ".neoport", ".venv", "bin", "python3");
 
         const cli = [pythonExecutable, scriptPath, ...args];
 
