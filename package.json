@@ -14,7 +14,7 @@
   "author": "Mowzli Sre Mohan Dass",
   "license": "MIT",
   "dependencies": {
-    "electron-squirrel-startup": "^1.0.0",
+    "electron-squirrel-startup": "^1.0.1",
     "neo4j-driver": "^5.16.0",
     "papaparse": "^5.4.1"
   },
@@ -35,7 +35,7 @@
         "extraFiles": [
           {
             "from": "./scripts/",
-            "to": "../scripts/" 
+            "to": "../scripts/"
           }
         ],
         "asar": true,
@@ -59,7 +59,11 @@
           "name": "@electron-forge/maker-squirrel",
           "config": {
             "name": "neoport",
-            "setupIcon": "assets/icon.ico"
+            "setupExe": "NeoPort.exe",
+            "setupIcon": "assets/icon.ico",
+            "noMsi": true,
+            "loadingGif": "assets/sq.gif",
+            "updateUrl": ""
           }
         },
         {
