@@ -2,6 +2,7 @@ const { app, BrowserWindow, ipcMain, Menu, globalShortcut } = require("electron"
 const path = require("path");
 const { spawn } = require("child_process");
 const os = require("os");
+const { pathToFileURL } = require('url')
 const fs = require("fs");
 const { checkPythonInstallation, checkPythonEnviroment, checkDependencies } = require("./python-handler");
 const isDev = false
@@ -15,20 +16,15 @@ let welcomeWindow;
 let mainWindow;
 
 const extractScript = (scriptName) => {
-    // Get the script path inside ASAR
     const scriptPathInsideAsar = path.join(__dirname, "scripts", scriptName);
-
-    // Create a temp folder to extract the script
     const tempDir = path.join(os.tmpdir(), "neoport-scripts");
     if (!fs.existsSync(tempDir)) {
         fs.mkdirSync(tempDir, { recursive: true });
     }
-
-    // Copy the script to the temp folder
     const extractedScriptPath = path.join(tempDir, scriptName);
     fs.copyFileSync(scriptPathInsideAsar, extractedScriptPath);
 
-    return extractedScriptPath;  // Return the path to the extracted file
+    return extractedScriptPath;
 };
 
 const createWindow = (width, height, urlPath, options = {}) => {
@@ -46,7 +42,9 @@ const createWindow = (width, height, urlPath, options = {}) => {
     if (isDev) {
         newWindow.loadURL(urlPath);
     } else {
-        newWindow.loadURL(`${buildPath}#${urlPath}`);
+        const fileUrl = pathToFileURL(buildPath);
+        fileUrl.hash = urlPath; 
+        newWindow.loadURL(fileUrl.href);
     };
 
     return newWindow;
@@ -103,10 +101,7 @@ const createMainWindow = (data) => {
     let pythonProcess;
 
     ipcMain.on("python-start", (event, args) => {
-        // Extract Python script from ASAR before execution
         const scriptPath = extractScript(`${args[0]}.py`);
-
-        // Choose the correct Python executable
         const pythonExecutable = process.platform === "win32"
             ? path.join(os.homedir(), ".neoport", ".venv", "Scripts", "python.exe")
             : path.join(os.homedir(), ".neoport", ".venv", "bin", "python3");
@@ -147,7 +142,6 @@ const createMainWindow = (data) => {
     return mainWindow;
 };
 
-// IPC Handlers
 ipcMain.handle("check-python", async () => checkPythonInstallation());
 ipcMain.handle("check-python-env", async () => checkPythonEnviroment());
 ipcMain.handle("check-dependencies", async () => checkDependencies());

@@ -72,7 +72,7 @@ const WelcomeScreen = () => {
                                 <Image src={logo} draggable="false" width={120} />
                             </Box>
                             <Text fontSize={25}>Welcome to Neoport</Text>
-                            <Text fontSize={10} color={"gray"}>Version 0.0.1</Text>
+                            <Text fontSize={10} color={"gray"}>Version 1.0.0</Text>
                     </Flex>
                     <Stack direction={"column"} alignContent={"center"} height={"30%"} px={5}>
                         <Box display={"flex"} py={0.5} px={1} role={"button"} borderRadius={2} color={"black"} gap={1} sx={{ cursor: "pointer", ":hover": { backgroundColor: "#F6F6F6" } }} onClick={handleCreateNew}>

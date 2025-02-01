@@ -2,17 +2,15 @@ const os = require('os');
 const path = require("path");
 const { exec, execFile } = require('child_process');
 const fs = require('fs');
-// Helper function to determine the Python command based on the OS
 function getOS() {
     switch (os.platform()) {
-        case 'win32': return 'python'; // Windows
-        case 'darwin': return 'python3'; // macOS
-        case 'linux': return 'python3'; // Linux
+        case 'win32': return 'python';
+        case 'darwin': return 'python3';
+        case 'linux': return 'python3';
         default: return null;
     }
 }
 
-// Function to check Python installation
 function checkPythonInstallation() {
     try {
         const command = getOS() + ' --version';
@@ -64,12 +62,10 @@ function checkPythonEnviroment() {
                 ? path.join(venvPath, 'Scripts', 'activate')
                 : path.join(venvPath, 'bin', 'activate');
 
-        // Check if the virtual environment already exists
         if (fs.existsSync(activatePath)) {
             return { success: true, message: 'Virtual environment already exists.' };
         }
 
-        // Create the virtual environment
         const pythonCmd = process.platform === 'win32' ? 'python' : 'python3';
 
         return new Promise((resolve, reject) => {
@@ -78,7 +74,6 @@ function checkPythonEnviroment() {
                     reject({ success: false, error: `Error creating virtual environment: ${stderr || error.message}` });
                 } else {
                     try {
-                        // Wait for the activation script to appear
                         await waitForFile(activatePath);
                         resolve({ success: true, message: `Virtual environment created at ${venvPath}` });
                     } catch (waitError) {
@@ -157,5 +152,4 @@ async function checkDependencies() {
     }
 }
 
-// Export the function
 module.exports = { checkPythonInstallation, checkPythonEnviroment, checkDependencies };
